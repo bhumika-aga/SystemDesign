@@ -1,0 +1,2865 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Proxy vs Reverse Proxy</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+      }
+      img {
+        max-width: 100%;
+      }
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap"
+    />
+    <style>
+      :root {
+        --bg: #eef1f4;
+        --surface: #ffffff;
+        --sunk: #e3e8ed;
+        --ink: #15202b;
+        --muted: #56636f;
+        --rule: #d3dae1;
+        --line: #8795a2;
+        --accent: #0e7c7b;
+        --accent-soft: #d7efee;
+        --warn: #b45a12;
+        --warn-soft: #fbe9d8;
+        --c-client-f: #e7ebef;
+        --c-client-s: #56636f;
+        --c-lb-f: #ede8ff;
+        --c-lb-s: #6546d6;
+        --c-app-f: #e3ecff;
+        --c-app-s: #2d5fc4;
+        --c-db-f: #dff3e7;
+        --c-db-s: #23845a;
+        --c-cache-f: #ffe7de;
+        --c-cache-s: #c94c25;
+        --c-cdn-f: #d9f1f1;
+        --c-cdn-s: #0e8080;
+        --c-mq-f: #fff0d3;
+        --c-mq-s: #a8701a;
+        --display:
+          "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui,
+          sans-serif;
+        --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+        --mono:
+          "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          color-scheme: dark;
+          --bg: #0f151b;
+          --surface: #172029;
+          --sunk: #1d2833;
+          --ink: #e3e9ef;
+          --muted: #98a5b1;
+          --rule: #2a3643;
+          --line: #6a7988;
+          --accent: #4cc8c4;
+          --accent-soft: #12302f;
+          --warn: #f0a060;
+          --warn-soft: #35240f;
+          --c-client-f: #202a34;
+          --c-client-s: #94a2af;
+          --c-lb-f: #241e44;
+          --c-lb-s: #a48fff;
+          --c-app-f: #162844;
+          --c-app-s: #76a0ff;
+          --c-db-f: #132e1f;
+          --c-db-s: #52c68a;
+          --c-cache-f: #371c13;
+          --c-cache-s: #ff8b64;
+          --c-cdn-f: #0f2f2f;
+          --c-cdn-s: #41c9c9;
+          --c-mq-f: #36290e;
+          --c-mq-s: #e7ab48;
+        }
+      }
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #0f151b;
+        --surface: #172029;
+        --sunk: #1d2833;
+        --ink: #e3e9ef;
+        --muted: #98a5b1;
+        --rule: #2a3643;
+        --line: #6a7988;
+        --accent: #4cc8c4;
+        --accent-soft: #12302f;
+        --warn: #f0a060;
+        --warn-soft: #35240f;
+        --c-client-f: #202a34;
+        --c-client-s: #94a2af;
+        --c-lb-f: #241e44;
+        --c-lb-s: #a48fff;
+        --c-app-f: #162844;
+        --c-app-s: #76a0ff;
+        --c-db-f: #132e1f;
+        --c-db-s: #52c68a;
+        --c-cache-f: #371c13;
+        --c-cache-s: #ff8b64;
+        --c-cdn-f: #0f2f2f;
+        --c-cdn-s: #41c9c9;
+        --c-mq-f: #36290e;
+        --c-mq-s: #e7ab48;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--body);
+        font-size: 17px;
+        line-height: 1.62;
+        padding-inline: 20px;
+        padding-block: 0 64px;
+      }
+      a {
+        color: var(--accent);
+      }
+      a:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--display);
+        line-height: 1.12;
+        text-wrap: balance;
+        margin: 0;
+      }
+      h2 {
+        font-size: clamp(28px, 4.2vw, 38px);
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+      h3 {
+        font-size: 19px;
+        font-weight: 700;
+        margin-top: 28px;
+        margin-bottom: 6px;
+      }
+      p {
+        margin: 0 0 12px;
+      }
+      ul,
+      ol {
+        margin: 0 0 12px;
+        padding-left: 22px;
+      }
+      li {
+        margin-bottom: 6px;
+      }
+      li::marker {
+        color: var(--muted);
+      }
+      code,
+      .mono {
+        font-family: var(--mono);
+        font-size: 0.84em;
+      }
+      code {
+        background: var(--sunk);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      b,
+      strong {
+        font-weight: 600;
+      }
+
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 56px;
+      }
+      @media (max-width: 960px) {
+        .wrap {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .rail {
+          display: none;
+        }
+      }
+
+      /* hero */
+      .hero {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding-block: 48px 28px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+        gap: 40px;
+        align-items: end;
+      }
+      @media (max-width: 860px) {
+        .hero {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 20px;
+        }
+      }
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+      h1 {
+        font-size: clamp(44px, 7.4vw, 84px);
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        line-height: 0.95;
+      }
+      h1 .big {
+        color: var(--accent);
+      }
+      .hero .intro {
+        font-size: 18px;
+        margin-top: 18px;
+        max-width: 34em;
+        color: var(--ink);
+      }
+      .stairs {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .stairs text {
+        font-family: var(--mono);
+      }
+      .stairs .st {
+        fill: var(--sunk);
+        stroke: var(--rule);
+      }
+      .stairs a:hover .st,
+      .stairs a:focus .st {
+        fill: var(--accent-soft);
+        stroke: var(--accent);
+      }
+      .stairs .sn {
+        font-size: 13px;
+        font-weight: 600;
+        fill: var(--ink);
+      }
+      .stairs .sl {
+        font-size: 11.5px;
+        fill: var(--muted);
+      }
+      .stairs .star {
+        font-size: 13px;
+        fill: var(--warn);
+      }
+      .stairs .cap {
+        font-size: 11px;
+        fill: var(--muted);
+      }
+
+      .legend {
+        max-width: 1120px;
+        margin: 0 auto 36px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 18px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        align-items: center;
+        border-top: 1px solid var(--rule);
+        padding-top: 16px;
+      }
+      .legend i {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        border: 1.5px solid;
+        vertical-align: -2px;
+        margin-right: 6px;
+      }
+
+      /* rail */
+      .rail {
+        position: sticky;
+        top: env(safe-area-inset-top, 0px);
+        align-self: start;
+        padding-top: 8px;
+        max-height: 100vh;
+        overflow: auto;
+      }
+      .rail ol {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-family: var(--display);
+        font-size: 15px;
+      }
+      .rail li {
+        margin: 0;
+      }
+      .rail a {
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        gap: 6px;
+        padding: 7px 8px;
+        border-radius: 8px;
+        color: var(--muted);
+        text-decoration: none;
+        line-height: 1.3;
+      }
+      .rail a span {
+        font-family: var(--mono);
+        font-size: 12px;
+        padding-top: 2px;
+      }
+      .rail a:hover {
+        background: var(--sunk);
+        color: var(--ink);
+      }
+      .rail a.on {
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: 0 0 0 1px var(--rule);
+      }
+      .rail .head {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 10px 8px;
+      }
+
+      main {
+        min-width: 0;
+      }
+      .step {
+        padding-block: 40px;
+        border-top: 1px solid var(--rule);
+      }
+      .step:first-child {
+        border-top: 0;
+        padding-top: 4px;
+      }
+      .step > * {
+        max-width: 720px;
+      }
+      .step > figure {
+        max-width: 760px;
+      }
+      .snum {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .flag {
+        color: var(--warn);
+        background: var(--warn-soft);
+        padding: 2px 8px;
+        border-radius: 99px;
+        letter-spacing: 0.02em;
+        text-transform: none;
+      }
+      .lede {
+        font-size: 19px;
+        margin-top: 12px;
+        color: var(--ink);
+      }
+
+      .eli5 {
+        background: var(--accent-soft);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin: 22px 0;
+      }
+      .eli5 p:last-child {
+        margin-bottom: 0;
+      }
+      .tag {
+        display: block;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      .beyond {
+        border: 1px solid var(--rule);
+        background: var(--surface);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin: 24px 0 8px;
+      }
+      .beyond .tag {
+        color: var(--muted);
+      }
+      .beyond ul:last-child,
+      .beyond p:last-child {
+        margin-bottom: 0;
+      }
+      .handoff {
+        margin-top: 22px;
+        font-family: var(--display);
+        font-size: 16px;
+        color: var(--muted);
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+      }
+      .handoff b {
+        color: var(--warn);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      figure {
+        margin: 22px 0;
+        background: var(--surface);
+        border-radius: 14px;
+        padding: 16px 12px 10px;
+        box-shadow: 0 0 0 1px var(--rule);
+      }
+      figcaption {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        padding: 8px 8px 2px;
+        line-height: 1.5;
+      }
+      .dg {
+        overflow-x: auto;
+      }
+      .dg svg {
+        display: block;
+        width: 100%;
+        min-width: 540px;
+        max-width: 680px;
+        margin: 0 auto;
+        height: auto;
+      }
+      svg .n {
+        stroke-width: 1.6;
+      }
+      svg .t-client {
+        fill: var(--c-client-f);
+        stroke: var(--c-client-s);
+      }
+      svg .t-lb {
+        fill: var(--c-lb-f);
+        stroke: var(--c-lb-s);
+      }
+      svg .t-app {
+        fill: var(--c-app-f);
+        stroke: var(--c-app-s);
+      }
+      svg .t-db {
+        fill: var(--c-db-f);
+        stroke: var(--c-db-s);
+      }
+      svg .t-cache {
+        fill: var(--c-cache-f);
+        stroke: var(--c-cache-s);
+      }
+      svg .t-cdn {
+        fill: var(--c-cdn-f);
+        stroke: var(--c-cdn-s);
+      }
+      svg .t-mq {
+        fill: var(--c-mq-f);
+        stroke: var(--c-mq-s);
+      }
+      svg .slot {
+        fill: var(--surface);
+        stroke: var(--c-mq-s);
+        stroke-width: 1.2;
+      }
+      svg .zone {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 1.3;
+        stroke-dasharray: 5 5;
+      }
+      svg .zl {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.06em;
+        fill: var(--muted);
+      }
+      svg .nl {
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 13.5px;
+        fill: var(--ink);
+      }
+      svg .ns {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--muted);
+      }
+      svg .nt {
+        font-family: var(--mono);
+        font-size: 11px;
+        fill: var(--muted);
+      }
+      svg .ed {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 1.6;
+      }
+      svg .ed.dash {
+        stroke-dasharray: 5 4;
+      }
+      svg .ah {
+        fill: var(--line);
+      }
+      svg .el {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--ink);
+        paint-order: stroke;
+        stroke: var(--surface);
+        stroke-width: 5px;
+        stroke-linejoin: round;
+      }
+
+      /* latency bars */
+      .lat {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 8px 12px;
+        align-items: center;
+        font-family: var(--mono);
+        font-size: 13px;
+        padding: 6px 8px 4px;
+      }
+      .lat .bar {
+        height: 14px;
+        border-radius: 4px;
+        background: var(--c-cdn-s);
+        opacity: 0.85;
+      }
+      .lat .v {
+        font-variant-numeric: tabular-nums;
+        color: var(--muted);
+      }
+
+      /* sharding tables */
+      .shard {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+        justify-content: center;
+        padding: 8px 4px;
+      }
+      .tbl {
+        display: grid;
+        border: 1.5px solid var(--c-db-s);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--c-db-f);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+      .tbl div {
+        padding: 3px 8px;
+        border-top: 1px solid var(--rule);
+        white-space: nowrap;
+      }
+      .tbl div.h {
+        border-top: 0;
+        font-weight: 600;
+        background: var(--surface);
+        color: var(--ink);
+      }
+      .tbl .dim {
+        color: var(--muted);
+      }
+      .arrow {
+        font-family: var(--display);
+        font-size: 26px;
+        color: var(--line);
+      }
+      .tname {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        text-align: center;
+        margin-bottom: 4px;
+      }
+
+      /* exchange cards */
+      .xgrid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin: 18px 0;
+      }
+      @media (max-width: 620px) {
+        .xgrid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .x {
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      .x h4 {
+        font-family: var(--display);
+        font-size: 17px;
+        margin: 0 0 4px;
+      }
+      .x .rule {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--c-mq-s);
+        margin-bottom: 6px;
+      }
+      .x p {
+        font-size: 15.5px;
+        margin: 0;
+      }
+      .x .src {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-top: 8px;
+      }
+
+      /* compare table */
+      .tw {
+        overflow-x: auto;
+        margin: 16px 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 15px;
+        min-width: 560px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      td:first-child {
+        font-family: var(--display);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      /* quiz */
+      details {
+        border-top: 1px solid var(--rule);
+        padding: 12px 0;
+      }
+      details:last-of-type {
+        border-bottom: 1px solid var(--rule);
+      }
+      summary {
+        cursor: pointer;
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 17px;
+        list-style: none;
+        display: flex;
+        gap: 10px;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      summary::before {
+        content: "+";
+        font-family: var(--mono);
+        color: var(--accent);
+        width: 14px;
+        flex: none;
+      }
+      details[open] summary::before {
+        content: "–";
+      }
+      details p {
+        margin: 8px 0 0 24px;
+      }
+
+      .sources {
+        font-size: 15px;
+      }
+      .sources li {
+        margin-bottom: 4px;
+      }
+      .foot {
+        max-width: 720px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 28px;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .rail a {
+          transition: background 0.15s;
+        }
+      }
+
+      /* ── additions shared by lectures 1–4 ── */
+      svg .n.down {
+        opacity: 0.5;
+        stroke-dasharray: 4 3;
+      }
+      svg .downx {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        font-weight: 600;
+        fill: var(--warn);
+        letter-spacing: 0.06em;
+      }
+      svg .ed.bad {
+        stroke: var(--warn);
+      }
+      svg .ed.good {
+        stroke: var(--accent);
+      }
+      svg .ahb {
+        fill: var(--warn);
+      }
+      svg .el.bad,
+      svg .nt.bad {
+        fill: var(--warn);
+      }
+      svg .nt.strong {
+        fill: var(--ink);
+        font-weight: 600;
+      }
+      svg .cutx {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: 18px;
+        fill: var(--warn);
+        paint-order: stroke;
+        stroke: var(--surface);
+        stroke-width: 5px;
+      }
+      svg .zone.bad {
+        stroke: var(--warn);
+      }
+      svg .zl.bad {
+        fill: var(--warn);
+      }
+      svg .life {
+        stroke: var(--line);
+        stroke-width: 1.4;
+      }
+      svg .ringc {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 10;
+        stroke-opacity: 0.28;
+      }
+      svg .tick {
+        stroke: var(--line);
+        stroke-width: 1.2;
+      }
+      svg .ringn {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--muted);
+      }
+      svg circle.n {
+        stroke-width: 1.6;
+      }
+
+      /* worked calculations */
+      .calc {
+        font-family: var(--mono);
+        font-size: 13.5px;
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin: 16px 0;
+        overflow-x: auto;
+        line-height: 1.75;
+        font-variant-numeric: tabular-nums;
+      }
+      .calc .c {
+        color: var(--muted);
+      }
+      .calc b {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .tiles {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin: 18px 0;
+      }
+      @media (max-width: 720px) {
+        .tiles {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      .tile {
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px;
+      }
+      .tile b {
+        display: block;
+        font-family: var(--display);
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+      .tile span {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+      }
+
+      /* bit layout */
+      .bits {
+        display: flex;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1.5px solid var(--c-lb-s);
+        font-family: var(--mono);
+        font-size: 12px;
+        min-width: 520px;
+      }
+      .bits div {
+        padding: 10px 8px;
+        text-align: center;
+        border-left: 1px solid var(--c-lb-s);
+        background: var(--c-lb-f);
+      }
+      .bits div:first-child {
+        border-left: 0;
+        background: var(--sunk);
+      }
+      .bits b {
+        display: block;
+        font-family: var(--display);
+        font-size: 14px;
+      }
+      .code {
+        font-family: var(--mono);
+        font-size: 13px;
+        background: var(--sunk);
+        border-radius: 10px;
+        padding: 12px 14px;
+        overflow-x: auto;
+        white-space: pre;
+        line-height: 1.6;
+      }
+
+      .side {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .side .cap {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      /* OSI-style stack */
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-width: 460px;
+      }
+      .stack a,
+      .stack div {
+        display: grid;
+        grid-template-columns: 34px 1fr auto;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 14px;
+        border-radius: 10px;
+        background: var(--sunk);
+        color: var(--muted);
+        text-decoration: none;
+        font-family: var(--display);
+        font-size: 15px;
+      }
+      .stack .no {
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .stack .ex {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .stack .hot {
+        background: var(--accent-soft);
+        color: var(--ink);
+        box-shadow: inset 0 0 0 1.5px var(--accent);
+        font-weight: 700;
+      }
+      .stack .hot .ex {
+        color: var(--accent);
+      }
+
+      /* pattern cards in hero */
+      .pgrid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      @media (max-width: 520px) {
+        .pgrid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .pgrid a {
+        display: block;
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px;
+        text-decoration: none;
+        color: var(--ink);
+      }
+      .pgrid a:hover {
+        border-color: var(--accent);
+      }
+      .pgrid b {
+        display: block;
+        font-family: var(--display);
+        font-size: 20px;
+        font-weight: 800;
+      }
+      .pgrid span {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+        line-height: 1.45;
+      }
+      .pgrid .star {
+        color: var(--warn);
+      }
+
+      /* verdict pills in tables */
+      .pill {
+        display: inline-block;
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 99px;
+        white-space: nowrap;
+      }
+      .pill.yes {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .pill.no {
+        background: var(--warn-soft);
+        color: var(--warn);
+      }
+      td .mono {
+        font-size: 13px;
+      }
+
+      .two {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin: 18px 0;
+      }
+      @media (max-width: 620px) {
+        .two {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .two .x ul {
+        margin: 6px 0 0;
+        padding-left: 18px;
+        font-size: 15.5px;
+      }
+      .two .x li {
+        margin-bottom: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div>
+        <div class="eyebrow">HLD lecture 16 · study notes</div>
+        <h1>Proxy <span class="big">Servers</span></h1>
+        <p class="intro">
+          A proxy is a middleman that makes requests on someone else's behalf. A
+          forward proxy stands in front of clients, and a reverse proxy stands
+          in front of servers. Once that's clear, three interview comparisons
+          come up: proxy vs VPN, proxy vs load balancer, and proxy vs firewall.
+        </p>
+      </div>
+      <div class="side">
+        <span class="cap">The whole idea in one picture</span>
+        <div class="dg"><div class="dg" data-d="hero"></div></div>
+      </div>
+    </header>
+
+    <div class="legend" aria-label="Diagram colour key">
+      <span>Colour key:</span>
+      <span
+        ><i
+          style="background: var(--c-client-f); border-color: var(--c-client-s)"
+        ></i
+        >Client</span
+      >
+      <span
+        ><i style="background: var(--c-lb-f); border-color: var(--c-lb-s)"></i
+        >Proxy / middle layer</span
+      >
+      <span
+        ><i style="background: var(--c-app-f); border-color: var(--c-app-s)"></i
+        >Server</span
+      >
+      <span
+        ><i style="background: var(--c-cdn-f); border-color: var(--c-cdn-s)"></i
+        >Internet / CDN</span
+      >
+      <span
+        ><i
+          style="background: var(--c-cache-f); border-color: var(--c-cache-s)"
+        ></i
+        >Cache / capability</span
+      >
+    </div>
+
+    <div class="wrap">
+      <nav class="rail" aria-label="Sections">
+        <p class="head">In this lecture</p>
+        <ol id="rail">
+          <li>
+            <a href="#s1"><span>01</span>What is a proxy?</a>
+          </li>
+          <li>
+            <a href="#s2"><span>02</span>Forward proxy</a>
+          </li>
+          <li>
+            <a href="#s3"><span>03</span>Forward: pros &amp; cons</a>
+          </li>
+          <li>
+            <a href="#s4"><span>04</span>Reverse proxy</a>
+          </li>
+          <li>
+            <a href="#s5"><span>05</span>Reverse: advantages</a>
+          </li>
+          <li>
+            <a href="#s6"><span>06</span>It's all direction</a>
+          </li>
+          <li>
+            <a href="#s7"><span>07</span>Proxy vs VPN</a>
+          </li>
+          <li>
+            <a href="#s8"><span>08</span>vs load balancer</a>
+          </li>
+          <li>
+            <a href="#s9"><span>09</span>Proxy vs firewall</a>
+          </li>
+          <li>
+            <a href="#s10"><span>→</span>Cheat sheet</a>
+          </li>
+          <li>
+            <a href="#extra"><span>+</span>Good to know</a>
+          </li>
+          <li>
+            <a href="#revise"><span>?</span>Revision</a>
+          </li>
+        </ol>
+      </nav>
+
+      <main>
+        <section class="step" id="s1">
+          <div class="snum">The idea</div>
+          <h2>What is a proxy server?</h2>
+          <figure>
+            <div class="dg" data-d="mom"></div>
+            <figcaption>
+              The children ask mum, mum buys the chocolate from the shop and
+              hands it over. The shopkeeper never deals with the children.
+            </figcaption>
+          </figure>
+          <div class="eli5">
+            <span class="tag">Picture it</span>
+            <p>
+              A small child wants chocolate. They don't go to the shop; they ask
+              mum, whom they trust. Mum goes to the shop, buys it and gives it
+              to them. Mum is the <b>proxy</b>: she makes the request
+              <b>on the child's behalf</b>. The child is the client and the
+              shopkeeper is the server.
+            </p>
+          </div>
+          <ul>
+            <li>
+              A proxy server <b>sits between client and server</b> and acts as
+              the intermediary. All requests pass through it.
+            </li>
+            <li>
+              The client and server <b>don't talk to each other directly</b>.
+            </li>
+            <li>
+              One proxy can serve <b>many clients</b>, just as mum handles
+              requests from both her daughter and her son.
+            </li>
+          </ul>
+          <p>
+            There are two types, <b>forward</b> and <b>reverse</b>. As the names
+            hint, they mainly differ in <b>direction</b>.
+          </p>
+        </section>
+
+        <section class="step" id="s2">
+          <div class="snum">Type 1</div>
+          <h2>Forward proxy: stands in front of the clients</h2>
+          <figure>
+            <div class="dg" data-d="forward"></div>
+            <figcaption>
+              Three machines on a private network go out through one forward
+              proxy. Google sees the proxy's IP (192.3.0.1), never the real
+              client's (172.1.0.1).
+            </figcaption>
+          </figure>
+          <p class="lede">
+            Often just called a "proxy". When people say proxy without a
+            qualifier, they usually mean this one. A closed network (your
+            computers, an office intranet) sends every outgoing request through
+            the forward proxy. The proxy goes out to the internet, reaches the
+            server, and passes the response back.
+          </p>
+          <ol>
+            <li>
+              C1 (IP <span class="mono">172.1.0.1</span>) asks for
+              <span class="mono">google.com</span>.
+            </li>
+            <li>
+              The forward proxy makes that request <b>using its own IP</b>,
+              <span class="mono">192.3.0.1</span>.
+            </li>
+            <li>
+              Google sees a request from <span class="mono">192.3.0.1</span>. It
+              has no idea C1 exists.
+            </li>
+          </ol>
+          <p>
+            So a forward proxy <b>hides the client network</b>. No server can
+            talk to the clients directly; it only ever knows the proxy.
+          </p>
+        </section>
+
+        <section class="step" id="s3">
+          <div class="snum">Forward proxy</div>
+          <h2>Five advantages, one disadvantage</h2>
+          <figure>
+            <div class="dg" data-d="fwdadv"></div>
+            <figcaption>
+              Three clients want google.com: the proxy makes one trip out and
+              caches the result. A rule blocks facebook.com for everyone.
+            </figcaption>
+          </figure>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Advantage</th>
+                  <th>How</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>1 · Anonymity</b></td>
+                  <td>
+                    The client's IP and location are hidden. Servers only see
+                    the proxy.
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>2 · Grouping requests</b></td>
+                  <td>
+                    If several clients ask for the same thing, the proxy can
+                    club them into <b>one</b> outgoing request.
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>3 · Access restricted content</b></td>
+                  <td>
+                    If a site is blocked by location, a proxy in another country
+                    (UK, US) makes the request look like it comes from there.
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>4 · Security and control</b></td>
+                  <td>
+                    Every request goes through one place, so you can add rules,
+                    e.g. "no social media: block facebook.com" for 100 office
+                    machines.
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>5 · Caching</b></td>
+                  <td>
+                    The first client's request for website A is fetched and
+                    stored. The next client asking for it is served from the
+                    proxy's cache without going out.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>The disadvantage: it works at the application level</h3>
+          <p>
+            The network is built in layers (physical, network, transport… up to
+            <b>application</b>). A proxy works at the <b>application layer</b>,
+            so it has to be set up <b>for each application</b>: 10 apps, 10
+            proxy setups. Tools that work at the <b>packet</b> level (like a
+            firewall, see below) don't have this limit.
+          </p>
+        </section>
+
+        <section class="step" id="s4">
+          <div class="snum">Type 2</div>
+          <h2>Reverse proxy: stands in front of the servers</h2>
+          <figure>
+            <div class="dg" data-d="reverse"></div>
+            <figcaption>
+              Requests from the internet reach the reverse proxy, which forwards
+              each one to a suitable server inside the company.
+            </figcaption>
+          </figure>
+          <p class="lede">
+            The opposite direction. A company may run many servers (server 1 …
+            server n). No request from the internet is allowed to reach them
+            directly. It goes to the <b>reverse proxy</b>, which forwards it to
+            the right server.
+          </p>
+          <p>
+            Forward proxy: the server only knows the proxy, not the clients.
+            Reverse proxy: the client only knows the proxy, not the servers.
+          </p>
+        </section>
+
+        <section class="step" id="s5">
+          <div class="snum">Reverse proxy</div>
+          <h2>What a reverse proxy gives you</h2>
+          <figure>
+            <div class="dg" data-d="cdn"></div>
+            <figcaption>
+              A CDN is a reverse proxy. Users in Paris, the US and India hit
+              their nearest CDN edge, which goes to the Singapore origin only on
+              a cache miss.
+            </figcaption>
+          </figure>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Advantage</th>
+                  <th>How</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>1 · Security / DDoS protection</b></td>
+                  <td>
+                    The outside world only knows the reverse proxy's IP, never
+                    the servers'. An attacker can only hit the proxy, which can
+                    be backed by huge resources and specialist technology.
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>2 · Caching</b></td>
+                  <td>
+                    The first Paris user's request is fetched from the origin
+                    and cached. Later Paris users are served from the CDN's
+                    cache.
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>3 · Lower latency</b></td>
+                  <td>
+                    Reverse proxies can be placed <b>near users</b>. Together
+                    with caching, responses come from nearby instead of from
+                    Singapore.
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>4 · Load balancing</b></td>
+                  <td>
+                    With heavy traffic, it spreads requests across servers 1, 2,
+                    3… The major advantage.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            <b>Remember for design interviews:</b> a
+            <b>CDN is a reverse proxy</b>. You'll draw CDNs again and again in
+            "design YouTube / Facebook / …" questions.
+          </p>
+        </section>
+
+        <section class="step" id="s6">
+          <div class="snum">The one-line difference</div>
+          <h2>Forward vs reverse is about direction</h2>
+          <figure>
+            <div class="dg" data-d="dir"></div>
+            <figcaption>
+              Same middleman, opposite sides. A forward proxy shields the
+              clients, a reverse proxy shields the servers.
+            </figcaption>
+          </figure>
+          <div class="two">
+            <div class="x">
+              <h4>Forward proxy</h4>
+              <p>
+                Acts for <b>clients</b>. Protects the clients: servers can't see
+                or reach them.
+              </p>
+            </div>
+            <div class="x">
+              <h4>Reverse proxy</h4>
+              <p>
+                Acts for <b>servers</b>. Protects the servers: clients can't see
+                or reach them.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="step" id="s7">
+          <div class="snum">
+            Comparison 1 <span class="flag">★ often confused</span>
+          </div>
+          <h2>Proxy vs VPN</h2>
+          <figure>
+            <div class="dg" data-d="vpn"></div>
+            <figcaption>
+              Top: a proxy swaps your IP but passes your data as it is. Bottom:
+              a VPN client encrypts everything into a tunnel, and the VPN server
+              decrypts it before sending it on.
+            </figcaption>
+          </figure>
+          <div class="two">
+            <div class="x">
+              <h4>Proxy</h4>
+              <p>
+                An intermediary that gives <b>IP anonymity</b> (masks the IP
+                address), and can add <b>caching</b> and <b>logging</b>. It does
+                <b>not</b> encrypt or decrypt your data.
+              </p>
+            </div>
+            <div class="x">
+              <h4>VPN</h4>
+              <p>
+                Much more than a proxy. You install a <b>VPN client</b>, which
+                connects to the provider's <b>VPN server</b>. Everything is
+                <b>encrypted</b> on the way into a <b>VPN tunnel</b> and
+                decrypted at the VPN server. An attacker in between can't read
+                it.
+              </p>
+            </div>
+          </div>
+          <p>
+            The key difference: a
+            <b>VPN encrypts and decrypts your data and builds a safe tunnel</b>.
+            A proxy only hides your IP.
+          </p>
+        </section>
+
+        <section class="step" id="s8">
+          <div class="snum">Comparison 2</div>
+          <h2>Reverse proxy vs load balancer</h2>
+          <figure>
+            <div class="dg" data-d="lbset"></div>
+            <figcaption>
+              Load balancing is one of several jobs a reverse proxy can do.
+            </figcaption>
+          </figure>
+          <ul>
+            <li>
+              <b
+                >A reverse proxy can act as a load balancer, but a load balancer
+                can't act as a proxy.</b
+              >
+              A proxy also brings anonymity, caching and logging. A load
+              balancer only spreads traffic.
+            </li>
+            <li>
+              <b>One server?</b> You don't need a load balancer; it only makes
+              sense with more than one server. You might still want a reverse
+              proxy, for caching, hiding the server and logging.
+            </li>
+          </ul>
+        </section>
+
+        <section class="step" id="s9">
+          <div class="snum">Comparison 3</div>
+          <h2>Proxy vs firewall</h2>
+          <figure>
+            <div class="dg" data-d="firewall"></div>
+            <figcaption>
+              A traditional firewall checks a packet's header (IPs and ports). A
+              proxy works at the application level, so it can also look at the
+              data itself.
+            </figcaption>
+          </figure>
+          <ul>
+            <li>
+              A <b>firewall</b> is a wall with small <b>holes</b>, each with a
+              <b>rule</b> about what may pass between your network and the
+              internet.
+            </li>
+            <li>
+              It does <b>packet scanning</b>: it checks the header, meaning
+              <b>source IP and port, destination IP and port</b>, and allows or
+              blocks by rule. It doesn't need setting up per application.
+            </li>
+            <li>
+              A <b>proxy</b> works at the <b>application level</b>. Beyond ports
+              and IPs it can see the <b>data</b>, so rules can be based on
+              content. But it must be set up per application.
+            </li>
+            <li>
+              Proxies started out as anonymity tools. Today a
+              <b>proxy firewall</b> can also block requests by rule, like a
+              firewall, while still working at the application layer. A
+              <b>traditional firewall</b> works on packets.
+            </li>
+          </ul>
+        </section>
+
+        <section class="step" id="s10">
+          <div class="snum">Cheat sheet</div>
+          <h2>Everything side by side</h2>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Acts for</th>
+                  <th>Main job</th>
+                  <th>Works at</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>Forward proxy</b></td>
+                  <td>Clients</td>
+                  <td>
+                    Hide clients, cache, filter, get around location blocks
+                  </td>
+                  <td>Application level</td>
+                </tr>
+                <tr>
+                  <td><b>Reverse proxy</b></td>
+                  <td>Servers</td>
+                  <td>
+                    Hide servers, DDoS shield, cache, lower latency, load
+                    balance
+                  </td>
+                  <td>Application level</td>
+                </tr>
+                <tr>
+                  <td><b>VPN</b></td>
+                  <td>Clients</td>
+                  <td>Encrypted tunnel + IP masking</td>
+                  <td>Network (tunnel)</td>
+                </tr>
+                <tr>
+                  <td><b>Load balancer</b></td>
+                  <td>Servers</td>
+                  <td>Spread traffic across servers only</td>
+                  <td>Transport or application</td>
+                </tr>
+                <tr>
+                  <td><b>Firewall</b></td>
+                  <td>A network</td>
+                  <td>Allow or block by rule</td>
+                  <td>Packet level (traditional)</td>
+                </tr>
+                <tr>
+                  <td><b>CDN</b></td>
+                  <td>Servers</td>
+                  <td>A reverse proxy near users: cache + latency + DDoS</td>
+                  <td>Application level</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="step" id="extra">
+          <div class="snum">
+            Beyond the course
+            <span class="flag">good to know as an engineer</span>
+          </div>
+          <h2>Good to know as an engineer</h2>
+
+          <h3>What reverse proxies do in real systems</h3>
+          <ul>
+            <li>
+              <b>TLS termination:</b> the proxy holds the HTTPS certificate,
+              decrypts requests and forwards plain HTTP to the servers on the
+              private network. That takes the encryption work off the app
+              servers.
+            </li>
+            <li>
+              <b
+                >Compression, rate limiting, auth checks, routing by URL path</b
+              >
+              (<span class="mono">/api</span> → API servers,
+              <span class="mono">/images</span> → storage). An
+              <b>API gateway</b> is a reverse proxy with these features, and the
+              rate limiter from lecture 12 often lives here.
+            </li>
+            <li>
+              Common software: <b>Nginx, HAProxy, Envoy, Traefik</b>. Managed
+              versions include cloud load balancers and Cloudflare.
+            </li>
+            <li>
+              In microservices, each service can get its own little reverse
+              proxy, a <b>sidecar</b> (e.g. Envoy). A <b>service mesh</b> is
+              many sidecars working together.
+            </li>
+          </ul>
+
+          <h3>Getting the real client IP: X-Forwarded-For</h3>
+          <p>
+            Behind a reverse proxy, your server sees every request coming from
+            the proxy's IP. Proxies add an
+            <span class="mono">X-Forwarded-For</span> header listing the
+            original client IP, then each proxy along the way. Clients can fake
+            this header, so only trust the entries added by
+            <b>your own</b> proxies, especially for rate limiting or blocking.
+          </p>
+
+          <h3>The load balancer nuance</h3>
+          <p>
+            "A load balancer can't be a proxy" holds for <b>layer 4</b> load
+            balancers, which just forward TCP connections without reading HTTP.
+            <b>Layer 7</b> load balancers (Nginx, HAProxy, AWS's application
+            load balancer) <em>are</em> reverse proxies. They terminate the
+            connection, read the request and can cache, rewrite and log. In
+            practice the two terms overlap heavily.
+          </p>
+
+          <h3>Proxies and HTTPS</h3>
+          <ul>
+            <li>
+              A forward proxy handles HTTPS with the
+              <span class="mono">CONNECT</span> method. It opens a
+              <b>tunnel</b> to the site and blindly relays the encrypted bytes.
+              Your traffic stays encrypted end to end by TLS, but the proxy can
+              only see the site's name, not the content. So a modern proxy can't
+              cache or filter HTTPS content unless it's set up to decrypt it.
+            </li>
+            <li>
+              "Grouping requests" is usually called <b>request collapsing</b>:
+              concurrent requests for the same cacheable item wait for one
+              fetch.
+            </li>
+          </ul>
+
+          <h3>The VPN nuance</h3>
+          <ul>
+            <li>
+              A VPN works at the <b>network layer</b> (e.g. WireGuard, IPsec),
+              so it covers <b>all apps</b> on the device at once. A regular
+              proxy covers only the apps configured to use it.
+              <b>SOCKS5</b> proxies sit in between: they relay any TCP/UDP
+              traffic, but still don't encrypt.
+            </li>
+            <li>
+              A VPN encrypts only the trip to the VPN server. After that,
+              traffic goes out normally, and the VPN provider can see it. You're
+              moving trust from your ISP to the provider, not removing it.
+            </li>
+          </ul>
+
+          <h3>Firewalls have caught up too</h3>
+          <p>
+            Modern "next-generation" firewalls are <b>stateful</b> (they track
+            connections) and can inspect application data. A <b>WAF</b> (web
+            application firewall) is essentially a reverse proxy that filters
+            HTTP attacks like SQL injection. "Packet vs application" is a good
+            way to explain the classic difference, but real products blend them.
+          </p>
+
+          <h3>Transparent proxies</h3>
+          <p>
+            The "set up per application" cost applies to
+            <b>explicit</b> proxies. Companies and ISPs also run
+            <b>transparent proxies</b> that intercept traffic at the network
+            level, with no configuration on the client.
+          </p>
+        </section>
+
+        <section class="step" id="revise">
+          <div class="snum">Check yourself</div>
+          <h2>Revision questions</h2>
+          <p class="lede">Try answering out loud before opening each one.</p>
+          <details>
+            <summary>Define a proxy server in one sentence.</summary>
+            <p>
+              A server that sits between client and server and makes requests on
+              someone's behalf, so the two never talk directly.
+            </p>
+          </details>
+          <details>
+            <summary>Forward vs reverse proxy?</summary>
+            <p>
+              Same middleman, opposite direction. A forward proxy acts for and
+              hides the clients. A reverse proxy acts for and hides the servers.
+            </p>
+          </details>
+          <details>
+            <summary>Five advantages of a forward proxy?</summary>
+            <p>
+              Anonymity, grouping requests, access to location-restricted
+              content, security/control rules, and caching.
+            </p>
+          </details>
+          <details>
+            <summary>Its disadvantage?</summary>
+            <p>
+              It works at the application level, so it has to be set up for each
+              application.
+            </p>
+          </details>
+          <details>
+            <summary>Four advantages of a reverse proxy?</summary>
+            <p>
+              Security (hides server IPs, absorbs DDoS), caching, lower latency
+              (placed near users), and load balancing.
+            </p>
+          </details>
+          <details>
+            <summary>Is a CDN a forward or reverse proxy?</summary>
+            <p>
+              Reverse. It sits in front of the origin servers and serves users
+              from nearby caches.
+            </p>
+          </details>
+          <details>
+            <summary>Proxy vs VPN?</summary>
+            <p>
+              A proxy masks the IP (and can cache and log). A VPN also encrypts
+              the data and sends it through a secure tunnel between the VPN
+              client and VPN server.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Why can a reverse proxy be a load balancer but not the other way
+              round?
+            </summary>
+            <p>
+              Load balancing is just one of a reverse proxy's jobs. A load
+              balancer has none of the others (anonymity, caching, logging). And
+              with one server you need no load balancer, but may still want a
+              reverse proxy.
+            </p>
+          </details>
+          <details>
+            <summary>Proxy vs firewall?</summary>
+            <p>
+              A traditional firewall scans packets: source and destination IPs
+              and ports, against rules. A proxy works at the application level
+              and can look at the data itself, but has to be set up per
+              application.
+            </p>
+          </details>
+
+          <h3>Sources used to expand these notes</h3>
+          <ul class="sources">
+            <li>
+              <a
+                href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Proxy_servers_and_tunneling"
+                target="_blank"
+                rel="noopener"
+                >MDN: Proxy servers and tunneling</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Methods/CONNECT"
+                target="_blank"
+                rel="noopener"
+                >MDN: CONNECT request method</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/X-Forwarded-For"
+                target="_blank"
+                rel="noopener"
+                >MDN: X-Forwarded-For header</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://dev.to/lovestaco/forward-vs-reverse-proxy-a-developer-friendly-guide-3248"
+                target="_blank"
+                rel="noopener"
+                >DEV: Forward vs reverse proxy, a developer guide</a
+              >
+            </li>
+          </ul>
+          <p class="foot">
+            Built from the lecture's audio transcript and whiteboard frames (29
+            min). Sections marked "Good to know" come from outside the video.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      window.DIAGRAMS = {
+        hero: {
+          h: 170,
+          alt: "A client talks to a proxy, and the proxy talks to the server",
+          n: [
+            { t: "client", x: 10, y: 60, w: 120, h: 52, l: "Client" },
+            {
+              t: "lb",
+              x: 260,
+              y: 56,
+              w: 120,
+              h: 60,
+              l: "Proxy",
+              s: "middleman",
+            },
+            { t: "app", x: 510, y: 60, w: 120, h: 52, l: "Server" },
+          ],
+          e: [
+            {
+              p: [
+                [130, 86],
+                [260, 86],
+              ],
+              both: 1,
+            },
+            {
+              p: [
+                [380, 86],
+                [510, 86],
+              ],
+              both: 1,
+            },
+          ],
+          notes: [
+            {
+              x: 320,
+              y: 154,
+              l: "client and server never talk directly",
+              a: "middle",
+            },
+          ],
+        },
+
+        mom: {
+          h: 230,
+          alt: "Two children ask mum; mum buys chocolate from the shop and brings it back",
+          n: [
+            { t: "client", x: 10, y: 30, w: 110, h: 48, l: "Child 1" },
+            { t: "client", x: 10, y: 130, w: 110, h: 48, l: "Child 2" },
+            { t: "lb", x: 250, y: 72, w: 140, h: 64, l: "Mum", s: "the proxy" },
+            {
+              t: "app",
+              x: 500,
+              y: 74,
+              w: 130,
+              h: 60,
+              l: "Shop",
+              s: "the server",
+            },
+          ],
+          e: [
+            {
+              p: [
+                [120, 54],
+                [250, 94],
+              ],
+              both: 1,
+            },
+            {
+              p: [
+                [120, 154],
+                [250, 114],
+              ],
+              both: 1,
+            },
+            {
+              p: [
+                [390, 94],
+                [500, 94],
+              ],
+              l: "buys",
+              at: [445, 86],
+            },
+            {
+              p: [
+                [500, 116],
+                [390, 116],
+              ],
+              good: 1,
+              l: "chocolate",
+              at: [445, 134],
+            },
+          ],
+          notes: [
+            {
+              x: 320,
+              y: 214,
+              l: "the shopkeeper only ever meets mum",
+              a: "middle",
+              strong: 1,
+            },
+          ],
+        },
+
+        forward: {
+          h: 300,
+          alt: "Clients C1, C2, C3 with private IPs send requests through a forward proxy with IP 192.3.0.1, across the internet, to google.com",
+          n: [
+            { t: "zone", x: 6, y: 8, w: 170, h: 284, l: "PRIVATE NETWORK" },
+            {
+              t: "client",
+              x: 22,
+              y: 40,
+              w: 138,
+              h: 50,
+              l: "C1",
+              s: "172.1.0.1",
+            },
+            {
+              t: "client",
+              x: 22,
+              y: 120,
+              w: 138,
+              h: 50,
+              l: "C2",
+              s: "172.2.0.1",
+            },
+            {
+              t: "client",
+              x: 22,
+              y: 200,
+              w: 138,
+              h: 50,
+              l: "C3",
+              s: "172.3.0.1",
+            },
+            {
+              t: "lb",
+              x: 206,
+              y: 110,
+              w: 136,
+              h: 70,
+              l: "Forward proxy",
+              s: "192.3.0.1",
+            },
+            { t: "cdn", x: 372, y: 116, w: 104, h: 58, l: "Internet" },
+            {
+              t: "app",
+              x: 506,
+              y: 110,
+              w: 124,
+              h: 70,
+              l: "google.com",
+              s: "server",
+            },
+          ],
+          e: [
+            {
+              p: [
+                [160, 65],
+                [206, 130],
+              ],
+            },
+            {
+              p: [
+                [160, 145],
+                [206, 145],
+              ],
+            },
+            {
+              p: [
+                [160, 225],
+                [206, 160],
+              ],
+            },
+            {
+              p: [
+                [342, 145],
+                [372, 145],
+              ],
+            },
+            {
+              p: [
+                [476, 145],
+                [506, 145],
+              ],
+            },
+          ],
+          notes: [
+            {
+              x: 420,
+              y: 222,
+              l: "google sees 192.3.0.1",
+              a: "middle",
+              strong: 1,
+            },
+            { x: 420, y: 242, l: "never 172.1.0.1", a: "middle" },
+          ],
+        },
+
+        fwdadv: {
+          h: 290,
+          alt: "Three clients ask for google.com; the forward proxy makes one request out and caches it; a rule blocks facebook.com",
+          n: [
+            {
+              t: "client",
+              x: 10,
+              y: 30,
+              w: 110,
+              h: 48,
+              l: "C1",
+              s: "google.com",
+            },
+            {
+              t: "client",
+              x: 10,
+              y: 110,
+              w: 110,
+              h: 48,
+              l: "C2",
+              s: "google.com",
+            },
+            {
+              t: "client",
+              x: 10,
+              y: 190,
+              w: 110,
+              h: 48,
+              l: "C3",
+              s: "facebook.com",
+            },
+            {
+              t: "lb",
+              x: 200,
+              y: 90,
+              w: 150,
+              h: 90,
+              l: "Forward proxy",
+              s: "cache + rules",
+            },
+            { t: "app", x: 480, y: 40, w: 150, h: 54, l: "google.com" },
+            {
+              t: "app",
+              x: 480,
+              y: 170,
+              w: 150,
+              h: 54,
+              l: "facebook.com",
+              s: "blocked by rule",
+            },
+          ],
+          e: [
+            {
+              p: [
+                [120, 54],
+                [200, 110],
+              ],
+            },
+            {
+              p: [
+                [120, 134],
+                [200, 134],
+              ],
+            },
+            {
+              p: [
+                [120, 214],
+                [200, 160],
+              ],
+            },
+            {
+              p: [
+                [350, 115],
+                [480, 67],
+              ],
+              good: 1,
+              l: "1 trip out",
+              at: [415, 80],
+            },
+            {
+              p: [
+                [350, 155],
+                [480, 197],
+              ],
+              bad: 1,
+              dash: 1,
+              l: "✕ blocked",
+              at: [415, 188],
+            },
+          ],
+          notes: [
+            {
+              x: 10,
+              y: 272,
+              l: "later requests for google.com come straight from the cache",
+              a: "start",
+              strong: 1,
+            },
+          ],
+        },
+
+        reverse: {
+          h: 260,
+          alt: "Requests from the internet reach a reverse proxy, which forwards them to server 1, server 2 or server n inside the company",
+          n: [
+            {
+              t: "cdn",
+              x: 10,
+              y: 96,
+              w: 120,
+              h: 60,
+              l: "Internet",
+              s: "users",
+            },
+            {
+              t: "lb",
+              x: 196,
+              y: 90,
+              w: 154,
+              h: 72,
+              l: "Reverse proxy",
+              s: "public IP",
+            },
+            { t: "zone", x: 400, y: 8, w: 234, h: 244, l: "COMPANY SERVERS" },
+            { t: "app", x: 420, y: 36, w: 194, h: 46, l: "Server 1" },
+            { t: "app", x: 420, y: 104, w: 194, h: 46, l: "Server 2" },
+            { t: "app", x: 420, y: 190, w: 194, h: 46, l: "Server n" },
+          ],
+          e: [
+            {
+              p: [
+                [130, 126],
+                [196, 126],
+              ],
+            },
+            {
+              p: [
+                [350, 110],
+                [420, 59],
+              ],
+            },
+            {
+              p: [
+                [350, 126],
+                [420, 127],
+              ],
+            },
+            {
+              p: [
+                [350, 142],
+                [420, 213],
+              ],
+            },
+          ],
+          notes: [
+            {
+              x: 273,
+              y: 196,
+              l: "server IPs stay hidden",
+              a: "middle",
+              strong: 1,
+            },
+            { x: 517, y: 174, l: "⋮", a: "middle" },
+          ],
+        },
+
+        cdn: {
+          h: 300,
+          alt: "Users in Paris, the US and India reach their local CDN; the CDNs go to the origin server in Singapore only on a cache miss",
+          n: [
+            { t: "client", x: 10, y: 20, w: 110, h: 46, l: "User", s: "Paris" },
+            { t: "client", x: 10, y: 124, w: 110, h: 46, l: "User", s: "US" },
+            {
+              t: "client",
+              x: 10,
+              y: 228,
+              w: 110,
+              h: 46,
+              l: "User",
+              s: "India",
+            },
+            {
+              t: "cdn",
+              x: 180,
+              y: 20,
+              w: 150,
+              h: 46,
+              l: "CDN · Paris",
+              s: "cache",
+            },
+            {
+              t: "cdn",
+              x: 180,
+              y: 124,
+              w: 150,
+              h: 46,
+              l: "CDN · US",
+              s: "cache",
+            },
+            {
+              t: "cdn",
+              x: 180,
+              y: 228,
+              w: 150,
+              h: 46,
+              l: "CDN · India",
+              s: "cache",
+            },
+            {
+              t: "app",
+              x: 470,
+              y: 110,
+              w: 160,
+              h: 74,
+              l: "Origin server",
+              s: "Singapore",
+            },
+          ],
+          e: [
+            {
+              p: [
+                [120, 43],
+                [180, 43],
+              ],
+              both: 1,
+              good: 1,
+            },
+            {
+              p: [
+                [120, 147],
+                [180, 147],
+              ],
+              both: 1,
+              good: 1,
+            },
+            {
+              p: [
+                [120, 251],
+                [180, 251],
+              ],
+              both: 1,
+              good: 1,
+            },
+            {
+              p: [
+                [330, 43],
+                [470, 128],
+              ],
+              dash: 1,
+            },
+            {
+              p: [
+                [330, 147],
+                [470, 147],
+              ],
+              dash: 1,
+            },
+            {
+              p: [
+                [330, 251],
+                [470, 166],
+              ],
+              dash: 1,
+            },
+          ],
+          notes: [{ x: 550, y: 212, l: "only on a cache miss", a: "middle" }],
+        },
+
+        dir: {
+          h: 230,
+          alt: "Forward proxy sits on the client side and protects clients; reverse proxy sits on the server side and protects servers",
+          n: [
+            { t: "zone", x: 6, y: 8, w: 300, h: 214, l: "FORWARD PROXY" },
+            { t: "client", x: 18, y: 70, w: 82, h: 50, l: "Clients" },
+            { t: "lb", x: 116, y: 66, w: 80, h: 58, l: "Proxy" },
+            { t: "cdn", x: 212, y: 70, w: 82, h: 50, l: "Internet" },
+            { t: "zone", x: 334, y: 8, w: 300, h: 214, l: "REVERSE PROXY" },
+            { t: "cdn", x: 346, y: 70, w: 82, h: 50, l: "Internet" },
+            { t: "lb", x: 444, y: 66, w: 80, h: 58, l: "Proxy" },
+            { t: "app", x: 540, y: 70, w: 82, h: 50, l: "Servers" },
+          ],
+          e: [
+            {
+              p: [
+                [100, 95],
+                [116, 95],
+              ],
+            },
+            {
+              p: [
+                [196, 95],
+                [212, 95],
+              ],
+            },
+            {
+              p: [
+                [428, 95],
+                [444, 95],
+              ],
+            },
+            {
+              p: [
+                [524, 95],
+                [540, 95],
+              ],
+            },
+          ],
+          notes: [
+            {
+              x: 156,
+              y: 160,
+              l: "protects the clients",
+              a: "middle",
+              strong: 1,
+            },
+            { x: 156, y: 180, l: "servers see only the proxy", a: "middle" },
+            {
+              x: 484,
+              y: 160,
+              l: "protects the servers",
+              a: "middle",
+              strong: 1,
+            },
+            { x: 484, y: 180, l: "clients see only the proxy", a: "middle" },
+          ],
+        },
+
+        vpn: {
+          h: 300,
+          alt: "Proxy: client to proxy to server, same data with a new IP. VPN: client to VPN client, encrypted tunnel to VPN server, then to server.",
+          n: [
+            { t: "zone", x: 6, y: 8, w: 628, h: 124, l: "PROXY" },
+            { t: "client", x: 22, y: 52, w: 110, h: 50, l: "Client" },
+            {
+              t: "lb",
+              x: 265,
+              y: 48,
+              w: 110,
+              h: 58,
+              l: "Proxy",
+              s: "swaps the IP",
+            },
+            { t: "app", x: 508, y: 52, w: 110, h: 50, l: "Server" },
+            { t: "zone", x: 6, y: 148, w: 628, h: 144, l: "VPN" },
+            { t: "client", x: 18, y: 194, w: 90, h: 50, l: "Client" },
+            {
+              t: "lb",
+              x: 128,
+              y: 190,
+              w: 110,
+              h: 58,
+              l: "VPN client",
+              s: "encrypts",
+            },
+            {
+              t: "lb",
+              x: 392,
+              y: 190,
+              w: 110,
+              h: 58,
+              l: "VPN server",
+              s: "decrypts",
+            },
+            { t: "app", x: 530, y: 194, w: 96, h: 50, l: "Server" },
+          ],
+          e: [
+            {
+              p: [
+                [132, 77],
+                [265, 77],
+              ],
+              l: "your data",
+              at: [198, 69],
+            },
+            {
+              p: [
+                [375, 77],
+                [508, 77],
+              ],
+              l: "same data, new IP",
+              at: [441, 69],
+            },
+            {
+              p: [
+                [108, 219],
+                [128, 219],
+              ],
+            },
+            {
+              p: [
+                [238, 219],
+                [392, 219],
+              ],
+              good: 1,
+              dash: 1,
+              l: "encrypted tunnel",
+              at: [315, 211],
+            },
+            {
+              p: [
+                [502, 219],
+                [530, 219],
+              ],
+            },
+          ],
+        },
+
+        lbset: {
+          h: 240,
+          alt: "Six jobs of a reverse proxy: load balancing, caching, anonymity, logging, security, TLS and compression; a load balancer does only the first",
+          n: [
+            {
+              t: "zone",
+              x: 6,
+              y: 8,
+              w: 628,
+              h: 196,
+              l: "A REVERSE PROXY CAN DO",
+            },
+            {
+              t: "lb",
+              x: 22,
+              y: 44,
+              w: 190,
+              h: 60,
+              l: "Load balancing",
+              s: "= a load balancer",
+            },
+            { t: "cache", x: 226, y: 44, w: 190, h: 60, l: "Caching" },
+            {
+              t: "cache",
+              x: 430,
+              y: 44,
+              w: 190,
+              h: 60,
+              l: "Anonymity",
+              s: "hides server IPs",
+            },
+            { t: "cache", x: 22, y: 124, w: 190, h: 60, l: "Logging" },
+            {
+              t: "cache",
+              x: 226,
+              y: 124,
+              w: 190,
+              h: 60,
+              l: "Security",
+              s: "DDoS shield",
+            },
+            {
+              t: "cache",
+              x: 430,
+              y: 124,
+              w: 190,
+              h: 60,
+              l: "TLS, compression…",
+              s: "see Good to know",
+            },
+          ],
+          e: [],
+          notes: [
+            {
+              x: 320,
+              y: 228,
+              l: "a load balancer covers just one of these boxes",
+              a: "middle",
+              strong: 1,
+            },
+          ],
+        },
+
+        firewall: {
+          h: 260,
+          alt: "A packet has a header with source and destination IP and port, and application data. A firewall reads the header; a proxy can read the application data too.",
+          n: [
+            {
+              t: "lb",
+              x: 10,
+              y: 48,
+              w: 124,
+              h: 60,
+              l: "Firewall",
+              s: "packet level",
+            },
+            { t: "zone", x: 154, y: 8, w: 332, h: 240, l: "ONE REQUEST" },
+            {
+              t: "client",
+              x: 170,
+              y: 40,
+              w: 300,
+              h: 74,
+              l: "Packet header",
+              s: "source IP:port → destination IP:port",
+            },
+            {
+              t: "app",
+              x: 170,
+              y: 144,
+              w: 300,
+              h: 80,
+              l: "Application data",
+              s: "URL, HTTP headers, body",
+            },
+            {
+              t: "lb",
+              x: 506,
+              y: 154,
+              w: 124,
+              h: 60,
+              l: "Proxy",
+              s: "application level",
+            },
+          ],
+          e: [
+            {
+              p: [
+                [134, 78],
+                [170, 78],
+              ],
+            },
+            {
+              p: [
+                [506, 184],
+                [470, 184],
+              ],
+            },
+            {
+              p: [
+                [568, 154],
+                [568, 77],
+                [470, 77],
+              ],
+              dash: 1,
+            },
+          ],
+          notes: [
+            { x: 72, y: 130, l: "reads only this", a: "middle" },
+            { x: 568, y: 236, l: "can read both", a: "middle" },
+          ],
+        },
+      };
+    </script>
+    <script>
+      (function () {
+        var D = window.DIAGRAMS || {};
+        function esc(s) {
+          return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        }
+        function label(n, cx, ty) {
+          var o = "";
+          if (n.s) {
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (ty - 3) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+            o +=
+              '<text class="ns" x="' +
+              cx +
+              '" y="' +
+              (ty + 12) +
+              '" text-anchor="middle">' +
+              esc(n.s) +
+              "</text>";
+          } else if (n.l) {
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (ty + 5) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+          }
+          return o;
+        }
+        function node(n) {
+          var o = "",
+            cx = n.x + n.w / 2,
+            cls = "n t-" + (n.c || n.t) + (n.down ? " down" : "");
+          if (n.t === "zone") {
+            return (
+              '<rect class="zone' +
+              (n.bad ? " bad" : "") +
+              '" x="' +
+              n.x +
+              '" y="' +
+              n.y +
+              '" width="' +
+              n.w +
+              '" height="' +
+              n.h +
+              '" rx="12"/>' +
+              (n.l
+                ? '<text class="zl' +
+                  (n.bad ? " bad" : "") +
+                  '" x="' +
+                  (n.x + 12) +
+                  '" y="' +
+                  (n.y + 17) +
+                  '">' +
+                  esc(n.l) +
+                  "</text>"
+                : "")
+            );
+          }
+          if (n.t === "line") {
+            // plain vertical/horizontal rule, e.g. sequence-diagram lifeline
+            return (
+              '<line class="life" x1="' +
+              n.x +
+              '" y1="' +
+              n.y +
+              '" x2="' +
+              (n.x + n.w) +
+              '" y2="' +
+              (n.y + n.h) +
+              '"/>'
+            );
+          }
+          if (n.t === "ring") {
+            // hash ring: centre (cx,cy), radius r, optional tick count + position numbers
+            var s =
+              '<circle class="ringc" cx="' +
+              n.cx +
+              '" cy="' +
+              n.cy +
+              '" r="' +
+              n.r +
+              '"/>';
+            for (var i = 0; i < (n.ticks || 0); i++) {
+              var a = ((-90 + (i * 360) / n.ticks) * Math.PI) / 180,
+                c = Math.cos(a),
+                si = Math.sin(a);
+              s +=
+                '<line class="tick" x1="' +
+                (n.cx + (n.r - 5) * c) +
+                '" y1="' +
+                (n.cy + (n.r - 5) * si) +
+                '" x2="' +
+                (n.cx + (n.r + 5) * c) +
+                '" y2="' +
+                (n.cy + (n.r + 5) * si) +
+                '"/>';
+              if (n.nums)
+                s +=
+                  '<text class="ringn" x="' +
+                  (n.cx + (n.r - 30) * c) +
+                  '" y="' +
+                  (n.cy + (n.r - 30) * si + 4) +
+                  '" text-anchor="middle">' +
+                  i +
+                  "</text>";
+            }
+            if (n.l)
+              s +=
+                '<text class="nt" x="' +
+                n.cx +
+                '" y="' +
+                (n.cy + 4) +
+                '" text-anchor="middle">' +
+                esc(n.l) +
+                "</text>";
+            return s;
+          }
+          var ty = n.y + n.h / 2;
+          if (n.t === "db") {
+            var e = 8,
+              x = n.x,
+              y = n.y,
+              w = n.w,
+              h = n.h;
+            o +=
+              '<path class="' +
+              cls.replace("t-db", "t-" + (n.c || "db")) +
+              '" d="M' +
+              x +
+              "," +
+              (y + e) +
+              " A" +
+              w / 2 +
+              "," +
+              e +
+              " 0 0 1 " +
+              (x + w) +
+              "," +
+              (y + e) +
+              " V" +
+              (y + h - e) +
+              " A" +
+              w / 2 +
+              "," +
+              e +
+              " 0 0 1 " +
+              x +
+              "," +
+              (y + h - e) +
+              ' Z"/>';
+            o +=
+              '<ellipse class="' +
+              cls.replace("t-db", "t-" + (n.c || "db")) +
+              '" cx="' +
+              cx +
+              '" cy="' +
+              (y + e) +
+              '" rx="' +
+              w / 2 +
+              '" ry="' +
+              e +
+              '"/>';
+            ty += e / 2;
+          } else if (n.t === "circle") {
+            o +=
+              '<circle class="' +
+              cls.replace("t-circle", "t-" + (n.c || "app")) +
+              '" cx="' +
+              cx +
+              '" cy="' +
+              ty +
+              '" r="' +
+              n.w / 2 +
+              '"/>';
+          } else {
+            o +=
+              '<rect class="' +
+              cls +
+              '" x="' +
+              n.x +
+              '" y="' +
+              n.y +
+              '" width="' +
+              n.w +
+              '" height="' +
+              n.h +
+              '" rx="9"/>';
+          }
+          if (n.slots) {
+            var pad = 16,
+              cw = (n.w - pad * 2 - 4 * 6) / 5,
+              cy = n.y + n.h - 30;
+            for (var i = 0; i < 5; i++)
+              o +=
+                '<rect class="slot" x="' +
+                (n.x + pad + i * (cw + 6)) +
+                '" y="' +
+                cy +
+                '" width="' +
+                cw +
+                '" height="16" rx="3"/>';
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (n.y + 24) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+            return o;
+          }
+          o += label(n, cx, ty);
+          if (n.down) {
+            o +=
+              '<text class="downx" x="' +
+              (n.w < 90 ? n.x + n.w / 2 : n.x + n.w - 4) +
+              '" y="' +
+              (n.w < 90 ? n.y - 4 : n.y + 14) +
+              '" text-anchor="' +
+              (n.w < 90 ? "middle" : "end") +
+              '">DOWN</text>';
+          }
+          return o;
+        }
+        function svg(key, d) {
+          var mid = "ah-" + key,
+            mbad = "ahb-" + key;
+          var o =
+            '<svg viewBox="0 0 640 ' +
+            d.h +
+            '" role="img" aria-label="' +
+            esc(d.alt || "Diagram") +
+            '">';
+          o +=
+            '<defs><marker id="' +
+            mid +
+            '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>' +
+            '<marker id="' +
+            mbad +
+            '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahb" d="M0,0 L10,5 L0,10 z"/></marker></defs>';
+          d.n.forEach(function (n) {
+            if (n.t === "zone" || n.t === "line" || n.t === "ring")
+              o += node(n);
+          });
+          (d.e || []).forEach(function (e) {
+            var pts = e.p
+              .map(function (p) {
+                return p.join(",");
+              })
+              .join(" ");
+            var m = e.bad ? mbad : mid;
+            o +=
+              '<polyline class="ed' +
+              (e.dash ? " dash" : "") +
+              (e.bad ? " bad" : "") +
+              (e.good ? " good" : "") +
+              '" points="' +
+              pts +
+              '"' +
+              (e.noarrow ? "" : ' marker-end="url(#' + m + ')"') +
+              (e.both ? ' marker-start="url(#' + m + ')"' : "") +
+              "/>";
+            if (e.cut) {
+              // a ✕ on a broken link
+              var c = e.cut;
+              o +=
+                '<text class="cutx" x="' +
+                c[0] +
+                '" y="' +
+                (c[1] + 6) +
+                '" text-anchor="middle">✕</text>';
+            }
+          });
+          d.n.forEach(function (n) {
+            if (n.t !== "zone" && n.t !== "line" && n.t !== "ring")
+              o += node(n);
+          });
+          (d.e || []).forEach(function (e) {
+            if (e.l)
+              o +=
+                '<text class="el' +
+                (e.bad ? " bad" : "") +
+                '" x="' +
+                e.at[0] +
+                '" y="' +
+                e.at[1] +
+                '" text-anchor="' +
+                (e.a || "middle") +
+                '">' +
+                esc(e.l) +
+                "</text>";
+          });
+          (d.notes || []).forEach(function (t) {
+            o +=
+              '<text class="nt' +
+              (t.bad ? " bad" : "") +
+              (t.strong ? " strong" : "") +
+              '" x="' +
+              t.x +
+              '" y="' +
+              t.y +
+              '" text-anchor="' +
+              (t.a || "start") +
+              '">' +
+              esc(t.l) +
+              "</text>";
+          });
+          return o + "</svg>";
+        }
+        document.querySelectorAll(".dg[data-d]").forEach(function (el) {
+          var k = el.getAttribute("data-d");
+          if (D[k]) el.innerHTML = svg(k, D[k]);
+        });
+        var links = [].slice.call(document.querySelectorAll("#rail a"));
+        if (links.length && "IntersectionObserver" in window) {
+          var io = new IntersectionObserver(
+            function (ents) {
+              ents.forEach(function (en) {
+                if (en.isIntersecting) {
+                  links.forEach(function (a) {
+                    a.classList.toggle(
+                      "on",
+                      a.getAttribute("href") === "#" + en.target.id,
+                    );
+                  });
+                }
+              });
+            },
+            { rootMargin: "-30% 0px -60% 0px" },
+          );
+          document.querySelectorAll("main .step").forEach(function (sec) {
+            io.observe(sec);
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
