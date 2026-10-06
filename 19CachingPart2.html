@@ -1,0 +1,2380 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Caching Strategies Part 2</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+      }
+      img {
+        max-width: 100%;
+      }
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap"
+    />
+    <style>
+      :root {
+        --bg: #eef1f4;
+        --surface: #ffffff;
+        --sunk: #e3e8ed;
+        --ink: #15202b;
+        --muted: #56636f;
+        --rule: #d3dae1;
+        --line: #8795a2;
+        --accent: #0e7c7b;
+        --accent-soft: #d7efee;
+        --warn: #b45a12;
+        --warn-soft: #fbe9d8;
+        --c-client-f: #e7ebef;
+        --c-client-s: #56636f;
+        --c-lb-f: #ede8ff;
+        --c-lb-s: #6546d6;
+        --c-app-f: #e3ecff;
+        --c-app-s: #2d5fc4;
+        --c-db-f: #dff3e7;
+        --c-db-s: #23845a;
+        --c-cache-f: #ffe7de;
+        --c-cache-s: #c94c25;
+        --c-cdn-f: #d9f1f1;
+        --c-cdn-s: #0e8080;
+        --c-mq-f: #fff0d3;
+        --c-mq-s: #a8701a;
+        --display:
+          "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui,
+          sans-serif;
+        --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+        --mono:
+          "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          color-scheme: dark;
+          --bg: #0f151b;
+          --surface: #172029;
+          --sunk: #1d2833;
+          --ink: #e3e9ef;
+          --muted: #98a5b1;
+          --rule: #2a3643;
+          --line: #6a7988;
+          --accent: #4cc8c4;
+          --accent-soft: #12302f;
+          --warn: #f0a060;
+          --warn-soft: #35240f;
+          --c-client-f: #202a34;
+          --c-client-s: #94a2af;
+          --c-lb-f: #241e44;
+          --c-lb-s: #a48fff;
+          --c-app-f: #162844;
+          --c-app-s: #76a0ff;
+          --c-db-f: #132e1f;
+          --c-db-s: #52c68a;
+          --c-cache-f: #371c13;
+          --c-cache-s: #ff8b64;
+          --c-cdn-f: #0f2f2f;
+          --c-cdn-s: #41c9c9;
+          --c-mq-f: #36290e;
+          --c-mq-s: #e7ab48;
+        }
+      }
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #0f151b;
+        --surface: #172029;
+        --sunk: #1d2833;
+        --ink: #e3e9ef;
+        --muted: #98a5b1;
+        --rule: #2a3643;
+        --line: #6a7988;
+        --accent: #4cc8c4;
+        --accent-soft: #12302f;
+        --warn: #f0a060;
+        --warn-soft: #35240f;
+        --c-client-f: #202a34;
+        --c-client-s: #94a2af;
+        --c-lb-f: #241e44;
+        --c-lb-s: #a48fff;
+        --c-app-f: #162844;
+        --c-app-s: #76a0ff;
+        --c-db-f: #132e1f;
+        --c-db-s: #52c68a;
+        --c-cache-f: #371c13;
+        --c-cache-s: #ff8b64;
+        --c-cdn-f: #0f2f2f;
+        --c-cdn-s: #41c9c9;
+        --c-mq-f: #36290e;
+        --c-mq-s: #e7ab48;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--body);
+        font-size: 17px;
+        line-height: 1.62;
+        padding-inline: 20px;
+        padding-block: 0 64px;
+      }
+      a {
+        color: var(--accent);
+      }
+      a:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--display);
+        line-height: 1.12;
+        text-wrap: balance;
+        margin: 0;
+      }
+      h2 {
+        font-size: clamp(28px, 4.2vw, 38px);
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+      h3 {
+        font-size: 19px;
+        font-weight: 700;
+        margin-top: 28px;
+        margin-bottom: 6px;
+      }
+      p {
+        margin: 0 0 12px;
+      }
+      ul,
+      ol {
+        margin: 0 0 12px;
+        padding-left: 22px;
+      }
+      li {
+        margin-bottom: 6px;
+      }
+      li::marker {
+        color: var(--muted);
+      }
+      code,
+      .mono {
+        font-family: var(--mono);
+        font-size: 0.84em;
+      }
+      code {
+        background: var(--sunk);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      b,
+      strong {
+        font-weight: 600;
+      }
+
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 56px;
+      }
+      @media (max-width: 960px) {
+        .wrap {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .rail {
+          display: none;
+        }
+      }
+
+      /* hero */
+      .hero {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding-block: 48px 28px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+        gap: 40px;
+        align-items: end;
+      }
+      @media (max-width: 860px) {
+        .hero {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 20px;
+        }
+      }
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+      h1 {
+        font-size: clamp(44px, 7.4vw, 84px);
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        line-height: 0.95;
+      }
+      h1 .big {
+        color: var(--accent);
+      }
+      .hero .intro {
+        font-size: 18px;
+        margin-top: 18px;
+        max-width: 34em;
+        color: var(--ink);
+      }
+      .stairs {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .stairs text {
+        font-family: var(--mono);
+      }
+      .stairs .st {
+        fill: var(--sunk);
+        stroke: var(--rule);
+      }
+      .stairs a:hover .st,
+      .stairs a:focus .st {
+        fill: var(--accent-soft);
+        stroke: var(--accent);
+      }
+      .stairs .sn {
+        font-size: 13px;
+        font-weight: 600;
+        fill: var(--ink);
+      }
+      .stairs .sl {
+        font-size: 11.5px;
+        fill: var(--muted);
+      }
+      .stairs .star {
+        font-size: 13px;
+        fill: var(--warn);
+      }
+      .stairs .cap {
+        font-size: 11px;
+        fill: var(--muted);
+      }
+
+      .legend {
+        max-width: 1120px;
+        margin: 0 auto 36px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 18px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        align-items: center;
+        border-top: 1px solid var(--rule);
+        padding-top: 16px;
+      }
+      .legend i {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        border: 1.5px solid;
+        vertical-align: -2px;
+        margin-right: 6px;
+      }
+
+      /* rail */
+      .rail {
+        position: sticky;
+        top: env(safe-area-inset-top, 0px);
+        align-self: start;
+        padding-top: 8px;
+        max-height: 100vh;
+        overflow: auto;
+      }
+      .rail ol {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-family: var(--display);
+        font-size: 15px;
+      }
+      .rail li {
+        margin: 0;
+      }
+      .rail a {
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        gap: 6px;
+        padding: 7px 8px;
+        border-radius: 8px;
+        color: var(--muted);
+        text-decoration: none;
+        line-height: 1.3;
+      }
+      .rail a span {
+        font-family: var(--mono);
+        font-size: 12px;
+        padding-top: 2px;
+      }
+      .rail a:hover {
+        background: var(--sunk);
+        color: var(--ink);
+      }
+      .rail a.on {
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: 0 0 0 1px var(--rule);
+      }
+      .rail .head {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 10px 8px;
+      }
+
+      main {
+        min-width: 0;
+      }
+      .step {
+        padding-block: 40px;
+        border-top: 1px solid var(--rule);
+      }
+      .step:first-child {
+        border-top: 0;
+        padding-top: 4px;
+      }
+      .step > * {
+        max-width: 720px;
+      }
+      .step > figure {
+        max-width: 760px;
+      }
+      .snum {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .flag {
+        color: var(--warn);
+        background: var(--warn-soft);
+        padding: 2px 8px;
+        border-radius: 99px;
+        letter-spacing: 0.02em;
+        text-transform: none;
+      }
+      .lede {
+        font-size: 19px;
+        margin-top: 12px;
+        color: var(--ink);
+      }
+
+      .eli5 {
+        background: var(--accent-soft);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin: 22px 0;
+      }
+      .eli5 p:last-child {
+        margin-bottom: 0;
+      }
+      .tag {
+        display: block;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      .beyond {
+        border: 1px solid var(--rule);
+        background: var(--surface);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin: 24px 0 8px;
+      }
+      .beyond .tag {
+        color: var(--muted);
+      }
+      .beyond ul:last-child,
+      .beyond p:last-child {
+        margin-bottom: 0;
+      }
+      .handoff {
+        margin-top: 22px;
+        font-family: var(--display);
+        font-size: 16px;
+        color: var(--muted);
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+      }
+      .handoff b {
+        color: var(--warn);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      figure {
+        margin: 22px 0;
+        background: var(--surface);
+        border-radius: 14px;
+        padding: 16px 12px 10px;
+        box-shadow: 0 0 0 1px var(--rule);
+      }
+      figcaption {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        padding: 8px 8px 2px;
+        line-height: 1.5;
+      }
+      .dg {
+        overflow-x: auto;
+      }
+      .dg svg {
+        display: block;
+        width: 100%;
+        min-width: 540px;
+        max-width: 680px;
+        margin: 0 auto;
+        height: auto;
+      }
+      svg .n {
+        stroke-width: 1.6;
+      }
+      svg .t-client {
+        fill: var(--c-client-f);
+        stroke: var(--c-client-s);
+      }
+      svg .t-lb {
+        fill: var(--c-lb-f);
+        stroke: var(--c-lb-s);
+      }
+      svg .t-app {
+        fill: var(--c-app-f);
+        stroke: var(--c-app-s);
+      }
+      svg .t-db {
+        fill: var(--c-db-f);
+        stroke: var(--c-db-s);
+      }
+      svg .t-cache {
+        fill: var(--c-cache-f);
+        stroke: var(--c-cache-s);
+      }
+      svg .t-cdn {
+        fill: var(--c-cdn-f);
+        stroke: var(--c-cdn-s);
+      }
+      svg .t-mq {
+        fill: var(--c-mq-f);
+        stroke: var(--c-mq-s);
+      }
+      svg .slot {
+        fill: var(--surface);
+        stroke: var(--c-mq-s);
+        stroke-width: 1.2;
+      }
+      svg .zone {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 1.3;
+        stroke-dasharray: 5 5;
+      }
+      svg .zl {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.06em;
+        fill: var(--muted);
+      }
+      svg .nl {
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 13.5px;
+        fill: var(--ink);
+      }
+      svg .ns {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--muted);
+      }
+      svg .nt {
+        font-family: var(--mono);
+        font-size: 11px;
+        fill: var(--muted);
+      }
+      svg .ed {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 1.6;
+      }
+      svg .ed.dash {
+        stroke-dasharray: 5 4;
+      }
+      svg .ah {
+        fill: var(--line);
+      }
+      svg .el {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--ink);
+        paint-order: stroke;
+        stroke: var(--surface);
+        stroke-width: 5px;
+        stroke-linejoin: round;
+      }
+
+      /* latency bars */
+      .lat {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 8px 12px;
+        align-items: center;
+        font-family: var(--mono);
+        font-size: 13px;
+        padding: 6px 8px 4px;
+      }
+      .lat .bar {
+        height: 14px;
+        border-radius: 4px;
+        background: var(--c-cdn-s);
+        opacity: 0.85;
+      }
+      .lat .v {
+        font-variant-numeric: tabular-nums;
+        color: var(--muted);
+      }
+
+      /* sharding tables */
+      .shard {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+        justify-content: center;
+        padding: 8px 4px;
+      }
+      .tbl {
+        display: grid;
+        border: 1.5px solid var(--c-db-s);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--c-db-f);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+      .tbl div {
+        padding: 3px 8px;
+        border-top: 1px solid var(--rule);
+        white-space: nowrap;
+      }
+      .tbl div.h {
+        border-top: 0;
+        font-weight: 600;
+        background: var(--surface);
+        color: var(--ink);
+      }
+      .tbl .dim {
+        color: var(--muted);
+      }
+      .arrow {
+        font-family: var(--display);
+        font-size: 26px;
+        color: var(--line);
+      }
+      .tname {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        text-align: center;
+        margin-bottom: 4px;
+      }
+
+      /* exchange cards */
+      .xgrid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin: 18px 0;
+      }
+      @media (max-width: 620px) {
+        .xgrid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .x {
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      .x h4 {
+        font-family: var(--display);
+        font-size: 17px;
+        margin: 0 0 4px;
+      }
+      .x .rule {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--c-mq-s);
+        margin-bottom: 6px;
+      }
+      .x p {
+        font-size: 15.5px;
+        margin: 0;
+      }
+      .x .src {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-top: 8px;
+      }
+
+      /* compare table */
+      .tw {
+        overflow-x: auto;
+        margin: 16px 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 15px;
+        min-width: 560px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      td:first-child {
+        font-family: var(--display);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      /* quiz */
+      details {
+        border-top: 1px solid var(--rule);
+        padding: 12px 0;
+      }
+      details:last-of-type {
+        border-bottom: 1px solid var(--rule);
+      }
+      summary {
+        cursor: pointer;
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 17px;
+        list-style: none;
+        display: flex;
+        gap: 10px;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      summary::before {
+        content: "+";
+        font-family: var(--mono);
+        color: var(--accent);
+        width: 14px;
+        flex: none;
+      }
+      details[open] summary::before {
+        content: "–";
+      }
+      details p {
+        margin: 8px 0 0 24px;
+      }
+
+      .sources {
+        font-size: 15px;
+      }
+      .sources li {
+        margin-bottom: 4px;
+      }
+      .foot {
+        max-width: 720px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 28px;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .rail a {
+          transition: background 0.15s;
+        }
+      }
+
+      /* ── additions shared by lectures 1–4 ── */
+      svg .n.down {
+        opacity: 0.5;
+        stroke-dasharray: 4 3;
+      }
+      svg .downx {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        font-weight: 600;
+        fill: var(--warn);
+        letter-spacing: 0.06em;
+      }
+      svg .ed.bad {
+        stroke: var(--warn);
+      }
+      svg .ed.good {
+        stroke: var(--accent);
+      }
+      svg .ahb {
+        fill: var(--warn);
+      }
+      svg .el.bad,
+      svg .nt.bad {
+        fill: var(--warn);
+      }
+      svg .nt.strong {
+        fill: var(--ink);
+        font-weight: 600;
+      }
+      svg .cutx {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: 18px;
+        fill: var(--warn);
+        paint-order: stroke;
+        stroke: var(--surface);
+        stroke-width: 5px;
+      }
+      svg .zone.bad {
+        stroke: var(--warn);
+      }
+      svg .zl.bad {
+        fill: var(--warn);
+      }
+      svg .life {
+        stroke: var(--line);
+        stroke-width: 1.4;
+      }
+      svg .ringc {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 10;
+        stroke-opacity: 0.28;
+      }
+      svg .tick {
+        stroke: var(--line);
+        stroke-width: 1.2;
+      }
+      svg .ringn {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--muted);
+      }
+      svg circle.n {
+        stroke-width: 1.6;
+      }
+
+      /* worked calculations */
+      .calc {
+        font-family: var(--mono);
+        font-size: 13.5px;
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin: 16px 0;
+        overflow-x: auto;
+        line-height: 1.75;
+        font-variant-numeric: tabular-nums;
+      }
+      .calc .c {
+        color: var(--muted);
+      }
+      .calc b {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .tiles {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin: 18px 0;
+      }
+      @media (max-width: 720px) {
+        .tiles {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      .tile {
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px;
+      }
+      .tile b {
+        display: block;
+        font-family: var(--display);
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+      .tile span {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+      }
+
+      /* bit layout */
+      .bits {
+        display: flex;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1.5px solid var(--c-lb-s);
+        font-family: var(--mono);
+        font-size: 12px;
+        min-width: 520px;
+      }
+      .bits div {
+        padding: 10px 8px;
+        text-align: center;
+        border-left: 1px solid var(--c-lb-s);
+        background: var(--c-lb-f);
+      }
+      .bits div:first-child {
+        border-left: 0;
+        background: var(--sunk);
+      }
+      .bits b {
+        display: block;
+        font-family: var(--display);
+        font-size: 14px;
+      }
+      .code {
+        font-family: var(--mono);
+        font-size: 13px;
+        background: var(--sunk);
+        border-radius: 10px;
+        padding: 12px 14px;
+        overflow-x: auto;
+        white-space: pre;
+        line-height: 1.6;
+      }
+
+      .side {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .side .cap {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      /* OSI-style stack */
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-width: 460px;
+      }
+      .stack a,
+      .stack div {
+        display: grid;
+        grid-template-columns: 34px 1fr auto;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 14px;
+        border-radius: 10px;
+        background: var(--sunk);
+        color: var(--muted);
+        text-decoration: none;
+        font-family: var(--display);
+        font-size: 15px;
+      }
+      .stack .no {
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .stack .ex {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .stack .hot {
+        background: var(--accent-soft);
+        color: var(--ink);
+        box-shadow: inset 0 0 0 1.5px var(--accent);
+        font-weight: 700;
+      }
+      .stack .hot .ex {
+        color: var(--accent);
+      }
+
+      /* pattern cards in hero */
+      .pgrid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      @media (max-width: 520px) {
+        .pgrid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .pgrid a {
+        display: block;
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px;
+        text-decoration: none;
+        color: var(--ink);
+      }
+      .pgrid a:hover {
+        border-color: var(--accent);
+      }
+      .pgrid b {
+        display: block;
+        font-family: var(--display);
+        font-size: 20px;
+        font-weight: 800;
+      }
+      .pgrid span {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+        line-height: 1.45;
+      }
+      .pgrid .star {
+        color: var(--warn);
+      }
+
+      /* verdict pills in tables */
+      .pill {
+        display: inline-block;
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 99px;
+        white-space: nowrap;
+      }
+      .pill.yes {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .pill.no {
+        background: var(--warn-soft);
+        color: var(--warn);
+      }
+      td .mono {
+        font-size: 13px;
+      }
+
+      .two {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin: 18px 0;
+      }
+      @media (max-width: 620px) {
+        .two {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .two .x ul {
+        margin: 6px 0 0;
+        padding-left: 18px;
+        font-size: 15.5px;
+      }
+      .two .x li {
+        margin-bottom: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div>
+        <div class="eyebrow">HLD lecture 19 · study notes</div>
+        <h1>Distributed <span class="big">Caching</span> · Part 2</h1>
+        <p class="intro">
+          Part 1 covered how to <em>read</em> through a cache. This part covers
+          what happens when data is <em>written</em>: skip the cache
+          (write-around), write to both at once (write-through), or write to the
+          cache now and the database later (write-back). Each one fixes a
+          different weakness.
+        </p>
+      </div>
+      <div class="side">
+        <span class="cap">On a write: cache, database, or both?</span>
+        <div class="dg"><div class="dg" data-d="hero"></div></div>
+      </div>
+    </header>
+
+    <div class="legend" aria-label="Diagram colour key">
+      <span>Colour key:</span>
+      <span
+        ><i
+          style="background: var(--c-client-f); border-color: var(--c-client-s)"
+        ></i
+        >Client</span
+      >
+      <span
+        ><i style="background: var(--c-app-f); border-color: var(--c-app-s)"></i
+        >App server</span
+      >
+      <span
+        ><i
+          style="background: var(--c-cache-f); border-color: var(--c-cache-s)"
+        ></i
+        >Cache</span
+      >
+      <span
+        ><i style="background: var(--c-db-f); border-color: var(--c-db-s)"></i
+        >Database</span
+      >
+      <span
+        ><i style="background: var(--c-mq-f); border-color: var(--c-mq-s)"></i
+        >Queue</span
+      >
+      <span style="color: var(--warn)">orange = failure / problem</span>
+    </div>
+
+    <div class="wrap">
+      <nav class="rail" aria-label="Sections">
+        <p class="head">In this lecture</p>
+        <ol id="rail">
+          <li>
+            <a href="#s1"><span>01</span>Why write strategies</a>
+          </li>
+          <li>
+            <a href="#s2"><span>02</span>Write-around</a>
+          </li>
+          <li>
+            <a href="#s3"><span>03</span>Write-through</a>
+          </li>
+          <li>
+            <a href="#s4"><span>04</span>Write-back</a>
+          </li>
+          <li>
+            <a href="#s5"><span>05</span>Write-back's risk</a>
+          </li>
+          <li>
+            <a href="#s6"><span>→</span>All five compared</a>
+          </li>
+          <li>
+            <a href="#extra"><span>+</span>Good to know</a>
+          </li>
+          <li>
+            <a href="#revise"><span>?</span>Revision</a>
+          </li>
+        </ol>
+      </nav>
+
+      <main>
+        <section class="step" id="s1">
+          <div class="snum">Recap</div>
+          <h2>Why we need write strategies</h2>
+          <p class="lede">
+            Cache-aside and read-through (Part 1) only handle <b>reads</b>.
+            Writes went straight to the database and left the cache holding
+            <b>stale</b> data (DB = 11, cache still says 10). A write strategy
+            decides what happens to the cache when data changes.
+          </p>
+          <p>
+            Remember the pattern for this whole lecture:
+            <b>write strategies are paired with a read strategy</b>. On their
+            own, most of them are useless.
+          </p>
+        </section>
+
+        <section class="step" id="s2">
+          <div class="snum">Strategy 3</div>
+          <h2>Write-around</h2>
+          <figure>
+            <div class="dg" data-d="around"></div>
+            <figcaption>
+              The write goes straight to the database. The cache isn't updated,
+              just invalidated (marked dirty).
+            </figcaption>
+          </figure>
+          <ul>
+            <li>
+              Writes go <b>directly to the database</b>. The cache's copy is
+              <b>not updated</b>.
+            </li>
+            <li>
+              Instead, the cached entry is <b>invalidated</b>: marked
+              <b>dirty</b> (a dirty flag set to true).
+            </li>
+            <li>
+              On the next read, the app sees the dirty flag and treats it as a
+              <b>cache miss</b>. It reads the fresh value from the database and
+              refreshes the cache.
+            </li>
+          </ul>
+          <figure>
+            <div class="dg" data-d="dirty"></div>
+            <figcaption>
+              PUT 11 updates the database and marks the cached 10 as dirty. The
+              next GET skips the dirty value and reloads 11.
+            </figcaption>
+          </figure>
+          <div class="two">
+            <div class="x">
+              <h4>Pros</h4>
+              <ul>
+                <li>
+                  Good for <b>read-heavy</b> apps. It must be used
+                  <b>with cache-aside or read-through</b>; alone it does
+                  nothing.
+                </li>
+                <li>
+                  <b>Fixes the inconsistency</b> between cache and database from
+                  Part 1.
+                </li>
+              </ul>
+            </div>
+            <div class="x">
+              <h4>Cons</h4>
+              <ul>
+                <li>
+                  <b>New data always misses first</b>: a POST never puts
+                  anything in the cache.
+                </li>
+                <li>
+                  <b>If the database is down, writes fail.</b> Writes depend
+                  entirely on the database, so they aren't fault tolerant.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="step" id="s3">
+          <div class="snum">Strategy 4</div>
+          <h2>Write-through</h2>
+          <figure>
+            <div class="dg" data-d="through"></div>
+            <figcaption>
+              Write into the cache first, then into the database, synchronously.
+              If either fails, roll back and fail the whole write.
+            </figcaption>
+          </figure>
+          <p class="lede">
+            The write passes <b>through</b> the cache. First write into the
+            <b>cache</b>, then, <b>synchronously</b>, into the <b>database</b>.
+            Both must succeed. If the database write fails, <b>roll back</b> the
+            cache write. If the cache write fails, fail the operation.
+          </p>
+          <div class="two">
+            <div class="x">
+              <h4>Pros</h4>
+              <ul>
+                <li><b>Cache and database always stay consistent.</b></li>
+                <li>
+                  <b>Cache hit chance increases a lot</b>: even brand-new data
+                  goes into the cache on write, so the "new data always misses
+                  first" problem is gone.
+                </li>
+              </ul>
+            </div>
+            <div class="x">
+              <h4>Cons</h4>
+              <ul>
+                <li>
+                  <b>Alone it's not useful</b>; it only adds latency (two writes
+                  instead of one). Always pair it with read-through or
+                  cache-aside, so something actually reads the cache.
+                </li>
+                <li>
+                  Needs <b>two-phase commit</b> to keep both writes
+                  all-or-nothing (lecture 20).
+                </li>
+                <li>
+                  <b>If the database is down, writes fail</b>, so it's still not
+                  fault tolerant.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="step" id="s4">
+          <div class="snum">
+            Strategy 5 <span class="flag">★ the fault-tolerance one</span>
+          </div>
+          <h2>Write-back (write-behind)</h2>
+          <figure>
+            <div class="dg" data-d="back"></div>
+            <figcaption>
+              Write into the cache, push a message onto a queue, and reply
+              "success" straight away. A worker drains the queue into the
+              database later.
+            </figcaption>
+          </figure>
+          <p class="lede">
+            Write into the <b>cache</b> first, then write to the database
+            <b>asynchronously</b>. The app pushes a message onto a
+            <b>queue</b> and replies to the client right away. A worker reads
+            the queue and writes into the database later.
+          </p>
+          <ul>
+            <li>
+              <b>Now writes don't depend on the database.</b> If it's down for 2
+              hours but cached data lives for 24, writes and reads keep working
+              from the cache. When the database comes back, the queue catches it
+              up. This is the <b>fault tolerance</b> promised in Part 1.
+            </li>
+          </ul>
+          <div class="two">
+            <div class="x">
+              <h4>Pros</h4>
+              <ul>
+                <li>Good for <b>write-heavy</b> apps.</li>
+                <li>
+                  <b>Lower write latency</b>: writing to a cache is faster than
+                  to a database, and nobody waits for the database.
+                </li>
+                <li>
+                  <b>Cache hit chance increases a lot</b>: the cache always has
+                  the latest data.
+                </li>
+                <li>
+                  <b
+                    >Much better performance with read-through or cache-aside</b
+                  >
+                  on top, so reads come from the cache too.
+                </li>
+                <li>
+                  Writes keep working <b>even when the database is down</b>.
+                </li>
+              </ul>
+            </div>
+            <div class="x">
+              <h4>Con</h4>
+              <ul>
+                <li>
+                  If the data
+                  <b
+                    >expires from the cache before the queue has written it to
+                    the database</b
+                  >, it's in neither place. See the next section.
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="eli5">
+            <span class="tag">Picture it</span>
+            <p>
+              A busy café cashier jots each order on a notepad (the cache) and
+              drops a copy in a tray (the queue). The kitchen manager (the
+              database) types the tray into the official ledger whenever they
+              get a moment. Customers never wait for the ledger.
+            </p>
+          </div>
+        </section>
+
+        <section class="step" id="s5">
+          <div class="snum">Write-back's catch</div>
+          <h2>When the cache forgets before the database remembers</h2>
+          <figure>
+            <div class="dg" data-d="ttl"></div>
+            <figcaption>
+              The cached 10 has a 3-hour TTL, but the database is down for 5
+              hours. From hour 3 to hour 5, the value 10 exists only as an
+              unprocessed message in the queue.
+            </figcaption>
+          </figure>
+          <ol>
+            <li>
+              Write 10: it's in the cache (TTL 3 h) and queued for the database.
+            </li>
+            <li>
+              The database goes down for <b>5 hours</b>. The queue waits and
+              retries.
+            </li>
+            <li>
+              At <b>3 hours</b>, the TTL expires and 10 is removed from the
+              cache.
+            </li>
+            <li>
+              Now 10 is in <b>neither</b> the cache nor the database. Anything
+              that reads or builds on it breaks.
+            </li>
+          </ol>
+          <p>
+            <b>The lecture's fix:</b> keep the cache's TTL comfortably longer
+            than any likely database outage, e.g. <b>2 days</b>.
+          </p>
+        </section>
+
+        <section class="step" id="s6">
+          <div class="snum">Both parts together</div>
+          <h2>All five strategies at a glance</h2>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Strategy</th>
+                  <th>On read / write</th>
+                  <th>Best for</th>
+                  <th>Main weakness</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>Cache-aside</b></td>
+                  <td>Read: the app loads on a miss</td>
+                  <td>Read-heavy</td>
+                  <td>Stale without a write strategy; first read misses</td>
+                </tr>
+                <tr>
+                  <td><b>Read-through</b></td>
+                  <td>Read: the cache library loads on a miss</td>
+                  <td>Read-heavy</td>
+                  <td>Same, and the cached data must match the table</td>
+                </tr>
+                <tr>
+                  <td><b>Write-around</b></td>
+                  <td>Write: DB only, mark the cache dirty</td>
+                  <td>Read-heavy (paired)</td>
+                  <td>Write fails if the DB is down; new data misses</td>
+                </tr>
+                <tr>
+                  <td><b>Write-through</b></td>
+                  <td>Write: cache then DB, synchronously</td>
+                  <td>Consistency + high hit rate</td>
+                  <td>
+                    Slower writes; needs 2PC; write fails if the DB is down
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>Write-back</b></td>
+                  <td>Write: cache now, DB later via a queue</td>
+                  <td>Write-heavy, fault tolerant</td>
+                  <td>Data gap if the cache expires before the DB write</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Only write-back keeps <b>writes</b> working while the database is
+            down. Write-around and write-through both fail writes when it is.
+          </p>
+        </section>
+
+        <section class="step" id="extra">
+          <div class="snum">
+            Beyond the course
+            <span class="flag">good to know as an engineer</span>
+          </div>
+          <h2>Good to know as an engineer</h2>
+
+          <h3>Write-around in practice: just delete the key</h3>
+          <p>
+            The "dirty flag" is usually implemented by <b>deleting</b> the cache
+            key after the database write. The next read misses and reloads. This
+            <b>cache-aside + delete-on-write</b> pairing is the most common
+            setup in real systems. Add a TTL as a safety net (see Part 1's race
+            condition).
+          </p>
+
+          <h3>Write-through without real two-phase commit</h3>
+          <ul>
+            <li>
+              Caches like Redis can't join a database transaction, so true 2PC
+              across them is rare (lecture 20 covers 2PC itself).
+            </li>
+            <li>
+              Most systems write the <b>database first</b> (the source of
+              truth), then update or delete the cache. If the cache step fails,
+              a TTL or a retry repairs it. Writing the cache first risks showing
+              data the database later rejects.
+            </li>
+            <li>
+              Managed read-through + write-through caches exist: e.g.
+              <b>Amazon DAX</b> in front of DynamoDB handles both for you.
+            </li>
+          </ul>
+
+          <h3>Write-back's other risks</h3>
+          <ul>
+            <li>
+              <b>Crash before flush:</b> if writes sit only in cache memory, a
+              cache crash loses them. The lecture's design pushes each write to
+              a <b>durable queue</b> (e.g. Kafka, lecture 15), which closes that
+              hole.
+            </li>
+            <li>
+              <b>Ordering:</b> two quick updates to the same key must reach the
+              database in order, or the older one wins. Partition the queue by
+              key, or attach version numbers.
+            </li>
+            <li>
+              <b>Other readers of the database</b> (reports, other services) see
+              old data until the queue catches up.
+            </li>
+            <li>
+              <b>Bonus:</b> write-back can <b>coalesce</b> writes. A view
+              counter bumped 1,000 times a second can be flushed to the database
+              once a second. That's why likes, views and game scores often use
+              it.
+            </li>
+          </ul>
+
+          <h3>The missing topic: eviction policies</h3>
+          <p>
+            The lecture's outline promised eviction policies, but the video ends
+            before them. A cache has limited memory, so when it's full,
+            something must go:
+          </p>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Policy</th>
+                  <th>Evicts</th>
+                  <th>Good when</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>LRU</b> (least recently used)</td>
+                  <td>The item untouched for the longest time</td>
+                  <td>
+                    Recent data is likely to be used again (the common default)
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>LFU</b> (least frequently used)</td>
+                  <td>The item used the fewest times</td>
+                  <td>
+                    Some items stay popular for a long time; resists one-off
+                    scans
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>FIFO</b> (first in, first out)</td>
+                  <td>The oldest inserted item</td>
+                  <td>Simple; age matters more than use</td>
+                </tr>
+                <tr>
+                  <td><b>TTL-based</b></td>
+                  <td>Items closest to expiring</td>
+                  <td>Data has a natural lifetime</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Redis controls this with <span class="mono">maxmemory-policy</span>:
+            e.g. <span class="mono">allkeys-lru</span>,
+            <span class="mono">allkeys-lfu</span>,
+            <span class="mono">volatile-ttl</span>, or
+            <span class="mono">noeviction</span> (refuse new writes when full).
+            Note that Redis's LRU and LFU are <b>approximate</b>: they sample a
+            few keys rather than tracking every one exactly. A write-back cache
+            must never evict entries that haven't been flushed to the database
+            yet.
+          </p>
+        </section>
+
+        <section class="step" id="revise">
+          <div class="snum">Check yourself</div>
+          <h2>Revision questions</h2>
+          <p class="lede">Try answering out loud before opening each one.</p>
+          <details>
+            <summary>
+              How does write-around keep the cache from going stale?
+            </summary>
+            <p>
+              It writes only to the database and invalidates (marks dirty) the
+              cached entry. The next read treats it as a miss and reloads the
+              fresh value.
+            </p>
+          </details>
+          <details>
+            <summary>Two weaknesses of write-around?</summary>
+            <p>
+              New data always misses on its first read, and writes fail when the
+              database is down.
+            </p>
+          </details>
+          <details>
+            <summary>Describe write-through and its main pro.</summary>
+            <p>
+              Write into the cache, then synchronously into the database. Both
+              succeed or both roll back. The cache and database stay consistent,
+              and even new data hits the cache.
+            </p>
+          </details>
+          <details>
+            <summary>Why is write-through "useless alone"?</summary>
+            <p>
+              It just adds a second write (more latency). It only pays off when
+              a read strategy actually serves reads from the cache.
+            </p>
+          </details>
+          <details>
+            <summary>Why does write-through need two-phase commit?</summary>
+            <p>
+              So the cache and database writes are all-or-nothing. Otherwise the
+              cache could hold a value the database never stored.
+            </p>
+          </details>
+          <details>
+            <summary>How does write-back give fault tolerance?</summary>
+            <p>
+              Writes land in the cache plus a queue and return immediately. If
+              the database is down, the system keeps working from the cache, and
+              the queue writes to the database once it's back.
+            </p>
+          </details>
+          <details>
+            <summary>
+              What goes wrong if the cache TTL is 3 h and the DB is down for 5
+              h?
+            </summary>
+            <p>
+              After 3 h the value expires from the cache, but it hasn't reached
+              the database yet, so it's in neither. The fix is a TTL longer than
+              any expected outage (e.g. 2 days).
+            </p>
+          </details>
+          <details>
+            <summary>
+              Which strategy keeps writes working when the database is down?
+            </summary>
+            <p>Only write-back.</p>
+          </details>
+          <details>
+            <summary>LRU vs LFU?</summary>
+            <p>
+              LRU evicts what hasn't been used for the longest time. LFU evicts
+              what has been used the fewest times.
+            </p>
+          </details>
+
+          <h3>Sources used to expand these notes</h3>
+          <ul class="sources">
+            <li>
+              <a
+                href="https://www.computerweekly.com/feature/Write-through-write-around-write-back-Cache-explained"
+                target="_blank"
+                rel="noopener"
+                >ComputerWeekly: Write-through, write-around, write-back
+                explained</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://shahriar.svbtle.com/Understanding-writethrough-writearound-and-writeback-caching-with-python"
+                target="_blank"
+                rel="noopener"
+                >Understanding write-through, write-around and write-back
+                caching</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://docs.aws.amazon.com/whitepapers/latest/database-caching-strategies-using-redis/evictions.html"
+                target="_blank"
+                rel="noopener"
+                >AWS: Evictions (caching strategies with Redis)</a
+              >
+            </li>
+          </ul>
+          <p class="foot">
+            Built from the lecture's audio transcript and whiteboard frames (15
+            min). Sections marked "Good to know" come from outside the video.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        // sequence-diagram frame: actors spread evenly across the 640-wide canvas
+        function actors(list, h) {
+          var gap = (640 - 40) / list.length,
+            n = [];
+          list.forEach(function (a, i) {
+            var cx = Math.round(20 + gap * (i + 0.5));
+            n.push({ t: a[0], x: cx - 54, y: 8, w: 108, h: 36, l: a[1] });
+            n.push({ t: "line", x: cx, y: 44, w: 0, h: h - 52 });
+          });
+          return n;
+        }
+        // 4 actors → lifelines at 95, 245, 395, 545; 5 actors → 80, 200, 320, 440, 560
+
+        window.DIAGRAMS = {
+          hero: {
+            h: 210,
+            alt: "A write request: should it go to the cache, the database, or both?",
+            n: [
+              {
+                t: "client",
+                x: 10,
+                y: 76,
+                w: 130,
+                h: 56,
+                l: "Write request",
+                s: "POST / PUT",
+              },
+              { t: "cache", x: 330, y: 16, w: 170, h: 56, l: "Cache" },
+              { t: "db", x: 330, y: 120, w: 170, h: 70, l: "Database" },
+              {
+                t: "mq",
+                x: 540,
+                y: 126,
+                w: 90,
+                h: 56,
+                l: "Queue",
+                s: "later?",
+              },
+            ],
+            e: [
+              {
+                p: [
+                  [140, 94],
+                  [330, 44],
+                ],
+                l: "first?",
+                at: [235, 58],
+              },
+              {
+                p: [
+                  [140, 114],
+                  [330, 155],
+                ],
+                l: "or here?",
+                at: [235, 148],
+              },
+              {
+                p: [
+                  [500, 155],
+                  [540, 155],
+                ],
+                dash: 1,
+              },
+            ],
+          },
+
+          around: {
+            h: 250,
+            alt: "Write-around sequence: client sends a write; server writes directly to the DB, then invalidates the data in the cache, then responds",
+            n: actors(
+              [
+                ["client", "Client"],
+                ["app", "Server"],
+                ["cache", "Cache"],
+                ["db", "DB"],
+              ],
+              250,
+            ),
+            e: [
+              {
+                p: [
+                  [95, 74],
+                  [245, 74],
+                ],
+                l: "1 · write (PUT)",
+                at: [170, 66],
+              },
+              {
+                p: [
+                  [245, 110],
+                  [545, 110],
+                ],
+                l: "2 · write directly to DB",
+                at: [470, 102],
+              },
+              {
+                p: [
+                  [245, 150],
+                  [395, 150],
+                ],
+                bad: 1,
+                dash: 1,
+                l: "3 · invalidate (dirty)",
+                at: [320, 142],
+              },
+              {
+                p: [
+                  [245, 200],
+                  [95, 200],
+                ],
+                good: 1,
+                l: "4 · success",
+                at: [170, 192],
+              },
+            ],
+          },
+
+          dirty: {
+            h: 230,
+            alt: "PUT 11 writes the database and marks the cached 10 dirty; a GET sees dirty, treats it as a miss and reloads 11 from the database",
+            n: [
+              { t: "client", x: 10, y: 30, w: 110, h: 50, l: "GET" },
+              {
+                t: "cache",
+                x: 200,
+                y: 20,
+                w: 200,
+                h: 70,
+                l: "Cache",
+                s: "10 · dirty = true",
+              },
+              {
+                t: "db",
+                x: 200,
+                y: 140,
+                w: 200,
+                h: 74,
+                l: "Database",
+                s: "11",
+              },
+              { t: "client", x: 510, y: 150, w: 120, h: 50, l: "PUT 11" },
+            ],
+            e: [
+              {
+                p: [
+                  [120, 55],
+                  [200, 55],
+                ],
+                bad: 1,
+                l: "dirty → miss",
+                at: [160, 47],
+              },
+              {
+                p: [
+                  [230, 140],
+                  [230, 90],
+                ],
+                good: 1,
+                l: "reload 11",
+                at: [240, 118],
+                a: "start",
+              },
+              {
+                p: [
+                  [510, 175],
+                  [400, 177],
+                ],
+                l: "write",
+                at: [455, 169],
+              },
+              {
+                p: [
+                  [510, 160],
+                  [400, 60],
+                ],
+                dash: 1,
+                bad: 1,
+                l: "mark dirty",
+                at: [455, 104],
+              },
+            ],
+          },
+
+          through: {
+            h: 300,
+            alt: "Write-through sequence: server writes into cache first, then synchronously into the DB; if either fails, the cache write is rolled back and the request fails",
+            n: actors(
+              [
+                ["client", "Client"],
+                ["app", "Server"],
+                ["cache", "Cache"],
+                ["db", "DB"],
+              ],
+              300,
+            ).concat([
+              {
+                t: "zone",
+                x: 200,
+                y: 176,
+                w: 390,
+                h: 62,
+                l: "IF EITHER WRITE FAILS",
+              },
+            ]),
+            e: [
+              {
+                p: [
+                  [95, 74],
+                  [245, 74],
+                ],
+                l: "1 · write (POST)",
+                at: [170, 66],
+              },
+              {
+                p: [
+                  [245, 108],
+                  [395, 108],
+                ],
+                l: "2 · first write into cache",
+                at: [320, 100],
+              },
+              {
+                p: [
+                  [245, 146],
+                  [545, 146],
+                ],
+                l: "3 · then write into DB (sync)",
+                at: [470, 138],
+              },
+              {
+                p: [
+                  [245, 220],
+                  [395, 220],
+                ],
+                bad: 1,
+                dash: 1,
+                l: "roll back",
+                at: [320, 212],
+              },
+              {
+                p: [
+                  [245, 270],
+                  [95, 270],
+                ],
+                good: 1,
+                l: "4 · success (both OK)",
+                at: [170, 262],
+              },
+            ],
+          },
+
+          back: {
+            h: 300,
+            alt: "Write-back sequence: server writes into cache, pushes a message to the queue, replies success; later the queue writes into the DB asynchronously",
+            n: actors(
+              [
+                ["client", "Client"],
+                ["app", "Server"],
+                ["cache", "Cache"],
+                ["db", "DB"],
+                ["mq", "Queue"],
+              ],
+              300,
+            ).concat([
+              { t: "zone", x: 410, y: 196, w: 180, h: 64, l: "LATER · ASYNC" },
+            ]),
+            e: [
+              {
+                p: [
+                  [80, 74],
+                  [200, 74],
+                ],
+                l: "1 · write",
+                at: [140, 66],
+              },
+              {
+                p: [
+                  [200, 106],
+                  [320, 106],
+                ],
+                l: "2 · into cache",
+                at: [260, 98],
+              },
+              {
+                p: [
+                  [200, 140],
+                  [560, 140],
+                ],
+                l: "3 · push message to queue",
+                at: [380, 132],
+              },
+              {
+                p: [
+                  [200, 176],
+                  [80, 176],
+                ],
+                good: 1,
+                l: "4 · success",
+                at: [140, 168],
+              },
+              {
+                p: [
+                  [560, 236],
+                  [440, 236],
+                ],
+                dash: 1,
+                l: "5 · write into DB",
+                at: [500, 228],
+              },
+            ],
+          },
+
+          ttl: {
+            h: 250,
+            alt: "Write-back risk: the cache holds 10 with a 3 hour TTL, the queue holds the write, and the database is down for 5 hours; between hour 3 and hour 5 the value is in neither",
+            n: [
+              {
+                t: "cache",
+                x: 10,
+                y: 24,
+                w: 180,
+                h: 64,
+                l: "Cache",
+                s: "10 · TTL 3 h",
+              },
+              {
+                t: "mq",
+                x: 230,
+                y: 24,
+                w: 180,
+                h: 64,
+                l: "Queue",
+                s: '"write 10" waiting',
+              },
+              {
+                t: "db",
+                x: 450,
+                y: 18,
+                w: 180,
+                h: 76,
+                l: "Database",
+                s: "down for 5 h",
+                down: 1,
+              },
+            ],
+            e: [
+              {
+                p: [
+                  [410, 56],
+                  [450, 56],
+                ],
+                bad: 1,
+                dash: 1,
+              },
+            ],
+            notes: [
+              {
+                x: 10,
+                y: 130,
+                l: "hour 3 · TTL expires → 10 leaves the cache",
+                a: "start",
+                bad: 1,
+              },
+              {
+                x: 10,
+                y: 152,
+                l: "hour 3–5 · 10 is in neither cache nor DB ✕",
+                a: "start",
+                bad: 1,
+              },
+              {
+                x: 10,
+                y: 174,
+                l: "hour 5 · DB back, queue finally writes 10",
+                a: "start",
+              },
+              {
+                x: 10,
+                y: 212,
+                l: "fix: TTL longer than any expected outage (e.g. 2 days)",
+                a: "start",
+                strong: 1,
+              },
+            ],
+          },
+        };
+      })();
+    </script>
+    <script>
+      (function () {
+        var D = window.DIAGRAMS || {};
+        function esc(s) {
+          return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        }
+        function label(n, cx, ty) {
+          var o = "";
+          if (n.s) {
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (ty - 3) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+            o +=
+              '<text class="ns" x="' +
+              cx +
+              '" y="' +
+              (ty + 12) +
+              '" text-anchor="middle">' +
+              esc(n.s) +
+              "</text>";
+          } else if (n.l) {
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (ty + 5) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+          }
+          return o;
+        }
+        function node(n) {
+          var o = "",
+            cx = n.x + n.w / 2,
+            cls = "n t-" + (n.c || n.t) + (n.down ? " down" : "");
+          if (n.t === "zone") {
+            return (
+              '<rect class="zone' +
+              (n.bad ? " bad" : "") +
+              '" x="' +
+              n.x +
+              '" y="' +
+              n.y +
+              '" width="' +
+              n.w +
+              '" height="' +
+              n.h +
+              '" rx="12"/>' +
+              (n.l
+                ? '<text class="zl' +
+                  (n.bad ? " bad" : "") +
+                  '" x="' +
+                  (n.x + 12) +
+                  '" y="' +
+                  (n.y + 17) +
+                  '">' +
+                  esc(n.l) +
+                  "</text>"
+                : "")
+            );
+          }
+          if (n.t === "line") {
+            // plain vertical/horizontal rule, e.g. sequence-diagram lifeline
+            return (
+              '<line class="life" x1="' +
+              n.x +
+              '" y1="' +
+              n.y +
+              '" x2="' +
+              (n.x + n.w) +
+              '" y2="' +
+              (n.y + n.h) +
+              '"/>'
+            );
+          }
+          if (n.t === "ring") {
+            // hash ring: centre (cx,cy), radius r, optional tick count + position numbers
+            var s =
+              '<circle class="ringc" cx="' +
+              n.cx +
+              '" cy="' +
+              n.cy +
+              '" r="' +
+              n.r +
+              '"/>';
+            for (var i = 0; i < (n.ticks || 0); i++) {
+              var a = ((-90 + (i * 360) / n.ticks) * Math.PI) / 180,
+                c = Math.cos(a),
+                si = Math.sin(a);
+              s +=
+                '<line class="tick" x1="' +
+                (n.cx + (n.r - 5) * c) +
+                '" y1="' +
+                (n.cy + (n.r - 5) * si) +
+                '" x2="' +
+                (n.cx + (n.r + 5) * c) +
+                '" y2="' +
+                (n.cy + (n.r + 5) * si) +
+                '"/>';
+              if (n.nums)
+                s +=
+                  '<text class="ringn" x="' +
+                  (n.cx + (n.r - 30) * c) +
+                  '" y="' +
+                  (n.cy + (n.r - 30) * si + 4) +
+                  '" text-anchor="middle">' +
+                  i +
+                  "</text>";
+            }
+            if (n.l)
+              s +=
+                '<text class="nt" x="' +
+                n.cx +
+                '" y="' +
+                (n.cy + 4) +
+                '" text-anchor="middle">' +
+                esc(n.l) +
+                "</text>";
+            return s;
+          }
+          var ty = n.y + n.h / 2;
+          if (n.t === "db") {
+            var e = 8,
+              x = n.x,
+              y = n.y,
+              w = n.w,
+              h = n.h;
+            o +=
+              '<path class="' +
+              cls.replace("t-db", "t-" + (n.c || "db")) +
+              '" d="M' +
+              x +
+              "," +
+              (y + e) +
+              " A" +
+              w / 2 +
+              "," +
+              e +
+              " 0 0 1 " +
+              (x + w) +
+              "," +
+              (y + e) +
+              " V" +
+              (y + h - e) +
+              " A" +
+              w / 2 +
+              "," +
+              e +
+              " 0 0 1 " +
+              x +
+              "," +
+              (y + h - e) +
+              ' Z"/>';
+            o +=
+              '<ellipse class="' +
+              cls.replace("t-db", "t-" + (n.c || "db")) +
+              '" cx="' +
+              cx +
+              '" cy="' +
+              (y + e) +
+              '" rx="' +
+              w / 2 +
+              '" ry="' +
+              e +
+              '"/>';
+            ty += e / 2;
+          } else if (n.t === "circle") {
+            o +=
+              '<circle class="' +
+              cls.replace("t-circle", "t-" + (n.c || "app")) +
+              '" cx="' +
+              cx +
+              '" cy="' +
+              ty +
+              '" r="' +
+              n.w / 2 +
+              '"/>';
+          } else {
+            o +=
+              '<rect class="' +
+              cls +
+              '" x="' +
+              n.x +
+              '" y="' +
+              n.y +
+              '" width="' +
+              n.w +
+              '" height="' +
+              n.h +
+              '" rx="9"/>';
+          }
+          if (n.slots) {
+            var pad = 16,
+              cw = (n.w - pad * 2 - 4 * 6) / 5,
+              cy = n.y + n.h - 30;
+            for (var i = 0; i < 5; i++)
+              o +=
+                '<rect class="slot" x="' +
+                (n.x + pad + i * (cw + 6)) +
+                '" y="' +
+                cy +
+                '" width="' +
+                cw +
+                '" height="16" rx="3"/>';
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (n.y + 24) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+            return o;
+          }
+          o += label(n, cx, ty);
+          if (n.down) {
+            o +=
+              '<text class="downx" x="' +
+              (n.w < 90 ? n.x + n.w / 2 : n.x + n.w - 4) +
+              '" y="' +
+              (n.w < 90 ? n.y - 4 : n.y + 14) +
+              '" text-anchor="' +
+              (n.w < 90 ? "middle" : "end") +
+              '">DOWN</text>';
+          }
+          return o;
+        }
+        function svg(key, d) {
+          var mid = "ah-" + key,
+            mbad = "ahb-" + key;
+          var o =
+            '<svg viewBox="0 0 640 ' +
+            d.h +
+            '" role="img" aria-label="' +
+            esc(d.alt || "Diagram") +
+            '">';
+          o +=
+            '<defs><marker id="' +
+            mid +
+            '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>' +
+            '<marker id="' +
+            mbad +
+            '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahb" d="M0,0 L10,5 L0,10 z"/></marker></defs>';
+          d.n.forEach(function (n) {
+            if (n.t === "zone" || n.t === "line" || n.t === "ring")
+              o += node(n);
+          });
+          (d.e || []).forEach(function (e) {
+            var pts = e.p
+              .map(function (p) {
+                return p.join(",");
+              })
+              .join(" ");
+            var m = e.bad ? mbad : mid;
+            o +=
+              '<polyline class="ed' +
+              (e.dash ? " dash" : "") +
+              (e.bad ? " bad" : "") +
+              (e.good ? " good" : "") +
+              '" points="' +
+              pts +
+              '"' +
+              (e.noarrow ? "" : ' marker-end="url(#' + m + ')"') +
+              (e.both ? ' marker-start="url(#' + m + ')"' : "") +
+              "/>";
+            if (e.cut) {
+              // a ✕ on a broken link
+              var c = e.cut;
+              o +=
+                '<text class="cutx" x="' +
+                c[0] +
+                '" y="' +
+                (c[1] + 6) +
+                '" text-anchor="middle">✕</text>';
+            }
+          });
+          d.n.forEach(function (n) {
+            if (n.t !== "zone" && n.t !== "line" && n.t !== "ring")
+              o += node(n);
+          });
+          (d.e || []).forEach(function (e) {
+            if (e.l)
+              o +=
+                '<text class="el' +
+                (e.bad ? " bad" : "") +
+                '" x="' +
+                e.at[0] +
+                '" y="' +
+                e.at[1] +
+                '" text-anchor="' +
+                (e.a || "middle") +
+                '">' +
+                esc(e.l) +
+                "</text>";
+          });
+          (d.notes || []).forEach(function (t) {
+            o +=
+              '<text class="nt' +
+              (t.bad ? " bad" : "") +
+              (t.strong ? " strong" : "") +
+              '" x="' +
+              t.x +
+              '" y="' +
+              t.y +
+              '" text-anchor="' +
+              (t.a || "start") +
+              '">' +
+              esc(t.l) +
+              "</text>";
+          });
+          return o + "</svg>";
+        }
+        document.querySelectorAll(".dg[data-d]").forEach(function (el) {
+          var k = el.getAttribute("data-d");
+          if (D[k]) el.innerHTML = svg(k, D[k]);
+        });
+        var links = [].slice.call(document.querySelectorAll("#rail a"));
+        if (links.length && "IntersectionObserver" in window) {
+          var io = new IntersectionObserver(
+            function (ents) {
+              ents.forEach(function (en) {
+                if (en.isIntersecting) {
+                  links.forEach(function (a) {
+                    a.classList.toggle(
+                      "on",
+                      a.getAttribute("href") === "#" + en.target.id,
+                    );
+                  });
+                }
+              });
+            },
+            { rootMargin: "-30% 0px -60% 0px" },
+          );
+          document.querySelectorAll("main .step").forEach(function (sec) {
+            io.observe(sec);
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
