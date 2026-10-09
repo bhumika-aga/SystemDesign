@@ -1,0 +1,2414 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Two-Phase Locking Part 2</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+      }
+      img {
+        max-width: 100%;
+      }
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap"
+    />
+    <style>
+      :root {
+        --bg: #eef1f4;
+        --surface: #ffffff;
+        --sunk: #e3e8ed;
+        --ink: #15202b;
+        --muted: #56636f;
+        --rule: #d3dae1;
+        --line: #8795a2;
+        --accent: #0e7c7b;
+        --accent-soft: #d7efee;
+        --warn: #b45a12;
+        --warn-soft: #fbe9d8;
+        --c-client-f: #e7ebef;
+        --c-client-s: #56636f;
+        --c-lb-f: #ede8ff;
+        --c-lb-s: #6546d6;
+        --c-app-f: #e3ecff;
+        --c-app-s: #2d5fc4;
+        --c-db-f: #dff3e7;
+        --c-db-s: #23845a;
+        --c-cache-f: #ffe7de;
+        --c-cache-s: #c94c25;
+        --c-cdn-f: #d9f1f1;
+        --c-cdn-s: #0e8080;
+        --c-mq-f: #fff0d3;
+        --c-mq-s: #a8701a;
+        --display:
+          "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui,
+          sans-serif;
+        --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+        --mono:
+          "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          color-scheme: dark;
+          --bg: #0f151b;
+          --surface: #172029;
+          --sunk: #1d2833;
+          --ink: #e3e9ef;
+          --muted: #98a5b1;
+          --rule: #2a3643;
+          --line: #6a7988;
+          --accent: #4cc8c4;
+          --accent-soft: #12302f;
+          --warn: #f0a060;
+          --warn-soft: #35240f;
+          --c-client-f: #202a34;
+          --c-client-s: #94a2af;
+          --c-lb-f: #241e44;
+          --c-lb-s: #a48fff;
+          --c-app-f: #162844;
+          --c-app-s: #76a0ff;
+          --c-db-f: #132e1f;
+          --c-db-s: #52c68a;
+          --c-cache-f: #371c13;
+          --c-cache-s: #ff8b64;
+          --c-cdn-f: #0f2f2f;
+          --c-cdn-s: #41c9c9;
+          --c-mq-f: #36290e;
+          --c-mq-s: #e7ab48;
+        }
+      }
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #0f151b;
+        --surface: #172029;
+        --sunk: #1d2833;
+        --ink: #e3e9ef;
+        --muted: #98a5b1;
+        --rule: #2a3643;
+        --line: #6a7988;
+        --accent: #4cc8c4;
+        --accent-soft: #12302f;
+        --warn: #f0a060;
+        --warn-soft: #35240f;
+        --c-client-f: #202a34;
+        --c-client-s: #94a2af;
+        --c-lb-f: #241e44;
+        --c-lb-s: #a48fff;
+        --c-app-f: #162844;
+        --c-app-s: #76a0ff;
+        --c-db-f: #132e1f;
+        --c-db-s: #52c68a;
+        --c-cache-f: #371c13;
+        --c-cache-s: #ff8b64;
+        --c-cdn-f: #0f2f2f;
+        --c-cdn-s: #41c9c9;
+        --c-mq-f: #36290e;
+        --c-mq-s: #e7ab48;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--body);
+        font-size: 17px;
+        line-height: 1.62;
+        padding-inline: 20px;
+        padding-block: 0 64px;
+      }
+      a {
+        color: var(--accent);
+      }
+      a:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--display);
+        line-height: 1.12;
+        text-wrap: balance;
+        margin: 0;
+      }
+      h2 {
+        font-size: clamp(28px, 4.2vw, 38px);
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+      h3 {
+        font-size: 19px;
+        font-weight: 700;
+        margin-top: 28px;
+        margin-bottom: 6px;
+      }
+      p {
+        margin: 0 0 12px;
+      }
+      ul,
+      ol {
+        margin: 0 0 12px;
+        padding-left: 22px;
+      }
+      li {
+        margin-bottom: 6px;
+      }
+      li::marker {
+        color: var(--muted);
+      }
+      code,
+      .mono {
+        font-family: var(--mono);
+        font-size: 0.84em;
+      }
+      code {
+        background: var(--sunk);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      b,
+      strong {
+        font-weight: 600;
+      }
+
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 56px;
+      }
+      @media (max-width: 960px) {
+        .wrap {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .rail {
+          display: none;
+        }
+      }
+
+      /* hero */
+      .hero {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding-block: 48px 28px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+        gap: 40px;
+        align-items: end;
+      }
+      @media (max-width: 860px) {
+        .hero {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 20px;
+        }
+      }
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+      h1 {
+        font-size: clamp(44px, 7.4vw, 84px);
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        line-height: 0.95;
+      }
+      h1 .big {
+        color: var(--accent);
+      }
+      .hero .intro {
+        font-size: 18px;
+        margin-top: 18px;
+        max-width: 34em;
+        color: var(--ink);
+      }
+      .stairs {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .stairs text {
+        font-family: var(--mono);
+      }
+      .stairs .st {
+        fill: var(--sunk);
+        stroke: var(--rule);
+      }
+      .stairs a:hover .st,
+      .stairs a:focus .st {
+        fill: var(--accent-soft);
+        stroke: var(--accent);
+      }
+      .stairs .sn {
+        font-size: 13px;
+        font-weight: 600;
+        fill: var(--ink);
+      }
+      .stairs .sl {
+        font-size: 11.5px;
+        fill: var(--muted);
+      }
+      .stairs .star {
+        font-size: 13px;
+        fill: var(--warn);
+      }
+      .stairs .cap {
+        font-size: 11px;
+        fill: var(--muted);
+      }
+
+      .legend {
+        max-width: 1120px;
+        margin: 0 auto 36px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 18px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        align-items: center;
+        border-top: 1px solid var(--rule);
+        padding-top: 16px;
+      }
+      .legend i {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        border: 1.5px solid;
+        vertical-align: -2px;
+        margin-right: 6px;
+      }
+
+      /* rail */
+      .rail {
+        position: sticky;
+        top: env(safe-area-inset-top, 0px);
+        align-self: start;
+        padding-top: 8px;
+        max-height: 100vh;
+        overflow: auto;
+      }
+      .rail ol {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-family: var(--display);
+        font-size: 15px;
+      }
+      .rail li {
+        margin: 0;
+      }
+      .rail a {
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        gap: 6px;
+        padding: 7px 8px;
+        border-radius: 8px;
+        color: var(--muted);
+        text-decoration: none;
+        line-height: 1.3;
+      }
+      .rail a span {
+        font-family: var(--mono);
+        font-size: 12px;
+        padding-top: 2px;
+      }
+      .rail a:hover {
+        background: var(--sunk);
+        color: var(--ink);
+      }
+      .rail a.on {
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: 0 0 0 1px var(--rule);
+      }
+      .rail .head {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 10px 8px;
+      }
+
+      main {
+        min-width: 0;
+      }
+      .step {
+        padding-block: 40px;
+        border-top: 1px solid var(--rule);
+      }
+      .step:first-child {
+        border-top: 0;
+        padding-top: 4px;
+      }
+      .step > * {
+        max-width: 720px;
+      }
+      .step > figure {
+        max-width: 760px;
+      }
+      .snum {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .flag {
+        color: var(--warn);
+        background: var(--warn-soft);
+        padding: 2px 8px;
+        border-radius: 99px;
+        letter-spacing: 0.02em;
+        text-transform: none;
+      }
+      .lede {
+        font-size: 19px;
+        margin-top: 12px;
+        color: var(--ink);
+      }
+
+      .eli5 {
+        background: var(--accent-soft);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin: 22px 0;
+      }
+      .eli5 p:last-child {
+        margin-bottom: 0;
+      }
+      .tag {
+        display: block;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      .beyond {
+        border: 1px solid var(--rule);
+        background: var(--surface);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin: 24px 0 8px;
+      }
+      .beyond .tag {
+        color: var(--muted);
+      }
+      .beyond ul:last-child,
+      .beyond p:last-child {
+        margin-bottom: 0;
+      }
+      .handoff {
+        margin-top: 22px;
+        font-family: var(--display);
+        font-size: 16px;
+        color: var(--muted);
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+      }
+      .handoff b {
+        color: var(--warn);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      figure {
+        margin: 22px 0;
+        background: var(--surface);
+        border-radius: 14px;
+        padding: 16px 12px 10px;
+        box-shadow: 0 0 0 1px var(--rule);
+      }
+      figcaption {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        padding: 8px 8px 2px;
+        line-height: 1.5;
+      }
+      .dg {
+        overflow-x: auto;
+      }
+      .dg svg {
+        display: block;
+        width: 100%;
+        min-width: 540px;
+        max-width: 680px;
+        margin: 0 auto;
+        height: auto;
+      }
+      svg .n {
+        stroke-width: 1.6;
+      }
+      svg .t-client {
+        fill: var(--c-client-f);
+        stroke: var(--c-client-s);
+      }
+      svg .t-lb {
+        fill: var(--c-lb-f);
+        stroke: var(--c-lb-s);
+      }
+      svg .t-app {
+        fill: var(--c-app-f);
+        stroke: var(--c-app-s);
+      }
+      svg .t-db {
+        fill: var(--c-db-f);
+        stroke: var(--c-db-s);
+      }
+      svg .t-cache {
+        fill: var(--c-cache-f);
+        stroke: var(--c-cache-s);
+      }
+      svg .t-cdn {
+        fill: var(--c-cdn-f);
+        stroke: var(--c-cdn-s);
+      }
+      svg .t-mq {
+        fill: var(--c-mq-f);
+        stroke: var(--c-mq-s);
+      }
+      svg .slot {
+        fill: var(--surface);
+        stroke: var(--c-mq-s);
+        stroke-width: 1.2;
+      }
+      svg .zone {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 1.3;
+        stroke-dasharray: 5 5;
+      }
+      svg .zl {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.06em;
+        fill: var(--muted);
+      }
+      svg .nl {
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 13.5px;
+        fill: var(--ink);
+      }
+      svg .ns {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--muted);
+      }
+      svg .nt {
+        font-family: var(--mono);
+        font-size: 11px;
+        fill: var(--muted);
+      }
+      svg .ed {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 1.6;
+      }
+      svg .ed.dash {
+        stroke-dasharray: 5 4;
+      }
+      svg .ah {
+        fill: var(--line);
+      }
+      svg .el {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--ink);
+        paint-order: stroke;
+        stroke: var(--surface);
+        stroke-width: 5px;
+        stroke-linejoin: round;
+      }
+
+      /* latency bars */
+      .lat {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 8px 12px;
+        align-items: center;
+        font-family: var(--mono);
+        font-size: 13px;
+        padding: 6px 8px 4px;
+      }
+      .lat .bar {
+        height: 14px;
+        border-radius: 4px;
+        background: var(--c-cdn-s);
+        opacity: 0.85;
+      }
+      .lat .v {
+        font-variant-numeric: tabular-nums;
+        color: var(--muted);
+      }
+
+      /* sharding tables */
+      .shard {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+        justify-content: center;
+        padding: 8px 4px;
+      }
+      .tbl {
+        display: grid;
+        border: 1.5px solid var(--c-db-s);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--c-db-f);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+      .tbl div {
+        padding: 3px 8px;
+        border-top: 1px solid var(--rule);
+        white-space: nowrap;
+      }
+      .tbl div.h {
+        border-top: 0;
+        font-weight: 600;
+        background: var(--surface);
+        color: var(--ink);
+      }
+      .tbl .dim {
+        color: var(--muted);
+      }
+      .arrow {
+        font-family: var(--display);
+        font-size: 26px;
+        color: var(--line);
+      }
+      .tname {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        text-align: center;
+        margin-bottom: 4px;
+      }
+
+      /* exchange cards */
+      .xgrid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin: 18px 0;
+      }
+      @media (max-width: 620px) {
+        .xgrid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .x {
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      .x h4 {
+        font-family: var(--display);
+        font-size: 17px;
+        margin: 0 0 4px;
+      }
+      .x .rule {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--c-mq-s);
+        margin-bottom: 6px;
+      }
+      .x p {
+        font-size: 15.5px;
+        margin: 0;
+      }
+      .x .src {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-top: 8px;
+      }
+
+      /* compare table */
+      .tw {
+        overflow-x: auto;
+        margin: 16px 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 15px;
+        min-width: 560px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      td:first-child {
+        font-family: var(--display);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      /* quiz */
+      details {
+        border-top: 1px solid var(--rule);
+        padding: 12px 0;
+      }
+      details:last-of-type {
+        border-bottom: 1px solid var(--rule);
+      }
+      summary {
+        cursor: pointer;
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 17px;
+        list-style: none;
+        display: flex;
+        gap: 10px;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      summary::before {
+        content: "+";
+        font-family: var(--mono);
+        color: var(--accent);
+        width: 14px;
+        flex: none;
+      }
+      details[open] summary::before {
+        content: "–";
+      }
+      details p {
+        margin: 8px 0 0 24px;
+      }
+
+      .sources {
+        font-size: 15px;
+      }
+      .sources li {
+        margin-bottom: 4px;
+      }
+      .foot {
+        max-width: 720px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 28px;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .rail a {
+          transition: background 0.15s;
+        }
+      }
+
+      /* ── additions shared by lectures 1–4 ── */
+      svg .n.down {
+        opacity: 0.5;
+        stroke-dasharray: 4 3;
+      }
+      svg .downx {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        font-weight: 600;
+        fill: var(--warn);
+        letter-spacing: 0.06em;
+      }
+      svg .ed.bad {
+        stroke: var(--warn);
+      }
+      svg .ed.good {
+        stroke: var(--accent);
+      }
+      svg .ahb {
+        fill: var(--warn);
+      }
+      svg .el.bad,
+      svg .nt.bad {
+        fill: var(--warn);
+      }
+      svg .nt.strong {
+        fill: var(--ink);
+        font-weight: 600;
+      }
+      svg .cutx {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: 18px;
+        fill: var(--warn);
+        paint-order: stroke;
+        stroke: var(--surface);
+        stroke-width: 5px;
+      }
+      svg .zone.bad {
+        stroke: var(--warn);
+      }
+      svg .zl.bad {
+        fill: var(--warn);
+      }
+      svg .life {
+        stroke: var(--line);
+        stroke-width: 1.4;
+      }
+      svg .ringc {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 10;
+        stroke-opacity: 0.28;
+      }
+      svg .tick {
+        stroke: var(--line);
+        stroke-width: 1.2;
+      }
+      svg .ringn {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--muted);
+      }
+      svg circle.n {
+        stroke-width: 1.6;
+      }
+
+      /* worked calculations */
+      .calc {
+        font-family: var(--mono);
+        font-size: 13.5px;
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin: 16px 0;
+        overflow-x: auto;
+        line-height: 1.75;
+        font-variant-numeric: tabular-nums;
+      }
+      .calc .c {
+        color: var(--muted);
+      }
+      .calc b {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .tiles {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin: 18px 0;
+      }
+      @media (max-width: 720px) {
+        .tiles {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      .tile {
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px;
+      }
+      .tile b {
+        display: block;
+        font-family: var(--display);
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+      .tile span {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+      }
+
+      /* bit layout */
+      .bits {
+        display: flex;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1.5px solid var(--c-lb-s);
+        font-family: var(--mono);
+        font-size: 12px;
+        min-width: 520px;
+      }
+      .bits div {
+        padding: 10px 8px;
+        text-align: center;
+        border-left: 1px solid var(--c-lb-s);
+        background: var(--c-lb-f);
+      }
+      .bits div:first-child {
+        border-left: 0;
+        background: var(--sunk);
+      }
+      .bits b {
+        display: block;
+        font-family: var(--display);
+        font-size: 14px;
+      }
+      .code {
+        font-family: var(--mono);
+        font-size: 13px;
+        background: var(--sunk);
+        border-radius: 10px;
+        padding: 12px 14px;
+        overflow-x: auto;
+        white-space: pre;
+        line-height: 1.6;
+      }
+
+      .side {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .side .cap {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      /* OSI-style stack */
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-width: 460px;
+      }
+      .stack a,
+      .stack div {
+        display: grid;
+        grid-template-columns: 34px 1fr auto;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 14px;
+        border-radius: 10px;
+        background: var(--sunk);
+        color: var(--muted);
+        text-decoration: none;
+        font-family: var(--display);
+        font-size: 15px;
+      }
+      .stack .no {
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .stack .ex {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .stack .hot {
+        background: var(--accent-soft);
+        color: var(--ink);
+        box-shadow: inset 0 0 0 1.5px var(--accent);
+        font-weight: 700;
+      }
+      .stack .hot .ex {
+        color: var(--accent);
+      }
+
+      /* pattern cards in hero */
+      .pgrid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      @media (max-width: 520px) {
+        .pgrid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .pgrid a {
+        display: block;
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px;
+        text-decoration: none;
+        color: var(--ink);
+      }
+      .pgrid a:hover {
+        border-color: var(--accent);
+      }
+      .pgrid b {
+        display: block;
+        font-family: var(--display);
+        font-size: 20px;
+        font-weight: 800;
+      }
+      .pgrid span {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+        line-height: 1.45;
+      }
+      .pgrid .star {
+        color: var(--warn);
+      }
+
+      /* verdict pills in tables */
+      .pill {
+        display: inline-block;
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 99px;
+        white-space: nowrap;
+      }
+      .pill.yes {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .pill.no {
+        background: var(--warn-soft);
+        color: var(--warn);
+      }
+      td .mono {
+        font-size: 13px;
+      }
+
+      .two {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin: 18px 0;
+      }
+      @media (max-width: 620px) {
+        .two {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .two .x ul {
+        margin: 6px 0 0;
+        padding-left: 18px;
+        font-size: 15.5px;
+      }
+      .two .x li {
+        margin-bottom: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div>
+        <div class="eyebrow">HLD lecture 27 · study notes</div>
+        <h1>Two-Phase Locking · <span class="big">Deadlocks</span></h1>
+        <p class="intro">
+          Part 1 showed that basic 2PL can deadlock: transactions waiting on
+          each other in a circle, forever. This part covers four ways out: give
+          up after a <b>timeout</b>, draw a <b>wait-for graph</b> and look for
+          circles, take every lock <b>up front</b> (conservative 2PL), or let a
+          transaction's <b>age</b> decide who waits and who's aborted.
+        </p>
+      </div>
+      <div class="side">
+        <span class="cap">Five transactions, each waiting for the next</span>
+        <div class="dg"><div class="dg" data-d="hero"></div></div>
+      </div>
+    </header>
+
+    <div class="legend" aria-label="Diagram colour key">
+      <span>Colour key:</span>
+      <span
+        ><i
+          style="background: var(--c-client-f); border-color: var(--c-client-s)"
+        ></i
+        >Transaction</span
+      >
+      <span
+        ><i style="background: var(--c-lb-f); border-color: var(--c-lb-s)"></i
+        >Scheduler / rule</span
+      >
+      <span
+        ><i style="background: var(--c-db-f); border-color: var(--c-db-s)"></i
+        >Data item</span
+      >
+      <span style="color: var(--warn)">orange = waiting / aborted</span>
+    </div>
+
+    <div class="wrap">
+      <nav class="rail" aria-label="Sections">
+        <p class="head">In this lecture</p>
+        <ol id="rail">
+          <li>
+            <a href="#s1"><span>01</span>Timeout</a>
+          </li>
+          <li>
+            <a href="#s2"><span>02</span>Wait-for graph</a>
+          </li>
+          <li>
+            <a href="#s3"><span>03</span>Choosing a victim</a>
+          </li>
+          <li>
+            <a href="#s4"><span>04</span>Conservative 2PL</a>
+          </li>
+          <li>
+            <a href="#s5"><span>05</span>Timestamps</a>
+          </li>
+          <li>
+            <a href="#s6"><span>06</span>Wait-die vs wound-wait</a>
+          </li>
+          <li>
+            <a href="#s7"><span>→</span>All four compared</a>
+          </li>
+          <li>
+            <a href="#extra"><span>+</span>Good to know</a>
+          </li>
+          <li>
+            <a href="#revise"><span>?</span>Revision</a>
+          </li>
+        </ol>
+      </nav>
+
+      <main>
+        <section class="step" id="s1">
+          <div class="snum">Strategy 1</div>
+          <h2>Timeout: "you've waited too long, so you're probably stuck"</h2>
+          <figure>
+            <div class="dg" data-d="timeout"></div>
+            <figcaption>
+              T1 waits a long time for a lock T2 holds. The scheduler assumes a
+              deadlock and aborts T1, but T2 was only slow, so T1 was aborted
+              for nothing.
+            </figcaption>
+          </figure>
+          <ul>
+            <li>
+              A <b>scheduler</b> tracks which transactions are running and which
+              are waiting.
+            </li>
+            <li>
+              If a transaction has waited <b>too long</b> for a lock, the
+              scheduler <b>assumes a deadlock</b> and <b>aborts</b> it.
+            </li>
+            <li>
+              <b>Disadvantage:</b> the scheduler can be wrong. T1 might be
+              waiting for T2, which isn't stuck but just
+              <b>takes a long time</b>. Then a perfectly valid transaction gets
+              aborted. So on its own, a timeout isn't a correct deadlock
+              detector.
+            </li>
+          </ul>
+        </section>
+
+        <section class="step" id="s2">
+          <div class="snum">Strategy 2 · better</div>
+          <h2>Wait-for graph (WFG): look for a circle</h2>
+          <figure>
+            <div class="dg" data-d="wfg"></div>
+            <figcaption>
+              An arrow from Ti to Tj means "Ti is waiting for Tj to release a
+              lock". A cycle means everyone in it is stuck: deadlock.
+            </figcaption>
+          </figure>
+          <ul>
+            <li>
+              The scheduler builds a <b>directed graph</b>. Each transaction is
+              a node, and there's an edge <b>Ti → Tj</b> if Ti is
+              <b>waiting for Tj</b> to release a lock.
+            </li>
+            <li>
+              When Tj releases that lock, the scheduler <b>deletes the edge</b>.
+            </li>
+            <li>
+              It <b>periodically checks the graph for a cycle</b>. T1 → T2 → T3
+              → T4 → T5 → T1 is a cycle, so those five transactions are
+              deadlocked.
+            </li>
+            <li>
+              Unlike a timeout, it doesn't guess: a slow T2 with no cycle is
+              left alone.
+            </li>
+          </ul>
+        </section>
+
+        <section class="step" id="s3">
+          <div class="snum">Breaking the cycle</div>
+          <h2>Choosing a victim</h2>
+          <figure>
+            <div class="dg" data-d="victim"></div>
+            <figcaption>
+              Aborting one transaction in the cycle (here T3, which also sits in
+              a second cycle) removes its edges and breaks the deadlock.
+            </figcaption>
+          </figure>
+          <p class="lede">
+            Once a cycle is found, one transaction in it is <b>aborted</b>. It's
+            called the <b>victim</b>. The scheduler doesn't pick blindly. It
+            weighs:
+          </p>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Criterion</th>
+                  <th>Reasoning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>Effort already spent</b></td>
+                  <td>
+                    A transaction that has done a lot of work is costly to throw
+                    away.
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>Effort still needed to finish</b></td>
+                  <td>
+                    One that's nearly done should probably be allowed to finish.
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>Cost of aborting</b></td>
+                  <td>
+                    How many updates must be rolled back to restore the previous
+                    state.
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>Number of cycles it's in</b></td>
+                  <td>
+                    A transaction in several cycles (like T3 here) breaks them
+                    all at once.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="step" id="s4">
+          <div class="snum">Strategy 3</div>
+          <h2>Conservative (static) 2PL: take every lock before you start</h2>
+          <figure>
+            <div class="dg" data-d="conservative"></div>
+            <figcaption>
+              All the locks are taken at the very start (the lock count jumps
+              straight to its maximum), held flat while working, then released.
+            </figcaption>
+          </figure>
+          <ul>
+            <li>
+              Each transaction <b>declares up front</b> every item it will read
+              and write.
+            </li>
+            <li>
+              The scheduler tries to grant <b>all</b> those locks at the start.
+              <b>If any one isn't available, none are granted</b>, and the
+              transaction waits until it can get all of them.
+            </li>
+            <li>
+              Once running, a transaction already holds everything it needs, so
+              it never waits mid-way. <b>Deadlock can't happen.</b>
+            </li>
+          </ul>
+          <figure>
+            <div class="dg" data-d="allornone"></div>
+            <figcaption>
+              The transaction needs A, B and C. A and B are free, but C is held
+              by someone else, so it gets none of them and waits.
+            </figcaption>
+          </figure>
+          <div class="two">
+            <div class="x">
+              <h4>Pro</h4>
+              <ul>
+                <li><b>No deadlocks.</b></li>
+              </ul>
+            </div>
+            <div class="x">
+              <h4>Cons</h4>
+              <ul>
+                <li>
+                  <b>Much less concurrency</b>: locks are held for the whole
+                  transaction, and work waits until everything is free.
+                </li>
+                <li>
+                  Extra burden: the scheduler must know every read and write in
+                  advance. That's why it's rarely used.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="step" id="s5">
+          <div class="snum">Strategy 4</div>
+          <h2>Timestamps: let age decide</h2>
+          <p class="lede">
+            Every transaction gets a <b>timestamp</b> when it starts. A smaller
+            timestamp means it started earlier: it's <b>older</b>.
+            <b>Older means higher priority.</b> When one transaction needs a
+            lock another holds, their ages decide who waits and who's aborted,
+            using one of two rules.
+          </p>
+        </section>
+
+        <section class="step" id="s6">
+          <div class="snum">
+            The two rules <span class="flag">★ easy to mix up</span>
+          </div>
+          <h2>Wait-die vs wound-wait</h2>
+          <figure>
+            <div class="dg" data-d="ages"></div>
+            <figcaption>
+              The same two situations under each rule. Wait-die: the old one may
+              wait, the young one dies. Wound-wait: the old one wounds (aborts)
+              the young one, and the young one waits.
+            </figcaption>
+          </figure>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Situation</th>
+                  <th>Wait-die</th>
+                  <th>Wound-wait</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <b>Older</b> T1 wants a lock that <b>younger</b> T2 holds
+                  </td>
+                  <td>T1 <b>waits</b></td>
+                  <td>
+                    T1 <b>wounds</b> T2: T2 is aborted and releases its lock,
+                    and T1 takes it
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <b>Younger</b> T2 wants a lock that <b>older</b> T1 holds
+                  </td>
+                  <td>T2 <b>dies</b> (is aborted)</td>
+                  <td>T2 <b>waits</b></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <ul>
+            <li>
+              <b>Wait-die:</b> "old waits for new; new doesn't wait for old, it
+              dies". If ts(T1) &lt; ts(T2), T1 waits for T2 to finish. Otherwise
+              the requester is aborted.
+            </li>
+            <li>
+              <b>Wound-wait:</b> "old wounds new". If ts(T1) &lt; ts(T2), T2 is
+              aborted and releases its lock. Otherwise the requester waits.
+            </li>
+            <li>
+              Either way, waiting only ever goes in <b>one direction of age</b>,
+              so a circle of waiting can't form. No deadlock.
+            </li>
+            <li>
+              <b>Memory trick:</b> the first word says what the
+              <b>older</b> transaction does. Wait-die: older <b>waits</b>.
+              Wound-wait: older <b>wounds</b>.
+            </li>
+          </ul>
+          <p>
+            Deadlock was the <b>first</b> big issue with basic 2PL. The
+            <b>second</b>, cascading aborts, is the next lecture.
+          </p>
+        </section>
+
+        <section class="step" id="s7">
+          <div class="snum">Side by side</div>
+          <h2>All four strategies</h2>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Strategy</th>
+                  <th>How</th>
+                  <th>Downside</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>Timeout</b></td>
+                  <td>Abort anything that waited too long</td>
+                  <td>Can abort transactions that were just slow</td>
+                </tr>
+                <tr>
+                  <td><b>Wait-for graph</b></td>
+                  <td>Find a cycle, abort a chosen victim</td>
+                  <td>Cost of maintaining and checking the graph</td>
+                </tr>
+                <tr>
+                  <td><b>Conservative 2PL</b></td>
+                  <td>Take all locks up front, all or nothing</td>
+                  <td>
+                    Much less concurrency; must know everything in advance
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>Wait-die / wound-wait</b></td>
+                  <td>Age decides who waits and who's aborted</td>
+                  <td>Some aborts are unnecessary (no real deadlock)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="step" id="extra">
+          <div class="snum">
+            Beyond the course
+            <span class="flag">good to know as an engineer</span>
+          </div>
+          <h2>Good to know as an engineer</h2>
+
+          <h3>Prevention vs detection</h3>
+          <p>
+            The lecture calls them all "prevention strategies" and calls
+            strategy 4 "timestamp-based deadlock <em>detection</em>". Strictly
+            there are two families:
+          </p>
+          <ul>
+            <li>
+              <b>Detection:</b> let deadlocks happen, then find and break them
+              (wait-for graph; timeout as a rough version).
+            </li>
+            <li>
+              <b>Prevention:</b> make deadlocks impossible by design
+              (conservative 2PL, wait-die, wound-wait, a fixed lock order).
+              Timestamp schemes are prevention: nothing is detected, the rule
+              just never allows a cycle.
+            </li>
+          </ul>
+
+          <h3>What real databases do</h3>
+          <ul>
+            <li>
+              MySQL InnoDB, PostgreSQL and SQL Server use
+              <b>wait-for-graph detection</b>, plus a <b>timeout</b> as a safety
+              net. PostgreSQL waits
+              <span class="mono">deadlock_timeout</span> (1 s by default) before
+              running the check. InnoDB's lock wait timeout is 50 s by default.
+            </li>
+            <li>
+              InnoDB tends to pick as victim the transaction that has changed
+              the fewest rows. SQL Server lets you set
+              <span class="mono">DEADLOCK_PRIORITY</span>.
+            </li>
+            <li>
+              Google <b>Spanner</b> uses <b>wound-wait</b> for its read-write
+              transactions. In a globally distributed system, maintaining one
+              global wait-for graph is too slow.
+            </li>
+          </ul>
+
+          <h3>Starvation and fairness</h3>
+          <p>
+            An aborted transaction <b>restarts with its original timestamp</b>.
+            It keeps getting older relative to newcomers, so eventually it has
+            top priority and can't be aborted forever. Wait-die can restart the
+            same young transaction many times, while wound-wait usually causes
+            fewer restarts.
+          </p>
+
+          <h3>Distributed deadlocks</h3>
+          <p>
+            Across many machines, no single node sees the whole wait-for graph.
+            Options: a central detector that collects every node's wait edges,
+            <b>edge-chasing probes</b> forwarded along wait edges (a probe that
+            comes back to its sender means there's a cycle), or simply using
+            timestamp prevention instead.
+          </p>
+
+          <h3>The simplest prevention in your own code</h3>
+          <p>
+            Always lock rows in the <b>same order</b>, e.g. when transferring
+            money, lock the lower account ID first. With a fixed order, a circle
+            can't form, and no fancy scheduler rules are needed.
+          </p>
+        </section>
+
+        <section class="step" id="revise">
+          <div class="snum">Check yourself</div>
+          <h2>Revision questions</h2>
+          <p class="lede">Try answering out loud before opening each one.</p>
+          <details>
+            <summary>Why is a timeout alone a poor deadlock detector?</summary>
+            <p>
+              It can't tell a deadlock from a slow transaction, so it may abort
+              a transaction that was only waiting for a long-running one.
+            </p>
+          </details>
+          <details>
+            <summary>
+              What does an edge Ti → Tj mean in a wait-for graph?
+            </summary>
+            <p>
+              Ti is waiting for Tj to release a lock. The edge is removed when
+              Tj releases it.
+            </p>
+          </details>
+          <details>
+            <summary>How does the wait-for graph reveal a deadlock?</summary>
+            <p>
+              A cycle in the graph means every transaction in it is waiting on
+              another in the same loop.
+            </p>
+          </details>
+          <details>
+            <summary>Four factors in choosing a victim?</summary>
+            <p>
+              Effort already spent, effort still needed, cost of aborting
+              (updates to roll back), and the number of cycles the transaction
+              is in.
+            </p>
+          </details>
+          <details>
+            <summary>
+              How does conservative 2PL avoid deadlock, and why is it rare?
+            </summary>
+            <p>
+              It grants all the locks a transaction needs at the start, all or
+              nothing, so no one waits mid-transaction. It's rare because it
+              cuts concurrency and needs every read/write declared in advance.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Older T1 wants a lock younger T2 holds. What happens under each
+              rule?
+            </summary>
+            <p>
+              Wait-die: T1 waits. Wound-wait: T2 is aborted and T1 takes the
+              lock.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Younger T2 wants a lock older T1 holds. What happens under each
+              rule?
+            </summary>
+            <p>Wait-die: T2 dies (is aborted). Wound-wait: T2 waits.</p>
+          </details>
+          <details>
+            <summary>Why can't timestamp schemes deadlock?</summary>
+            <p>
+              Waiting is only ever allowed in one direction of age (old for
+              young in wait-die, young for old in wound-wait), so a cycle can't
+              form.
+            </p>
+          </details>
+
+          <h3>Sources used to expand these notes</h3>
+          <ul class="sources">
+            <li>
+              <a
+                href="https://www.geeksforgeeks.org/dbms/introduction-to-timestamp-and-deadlock-prevention-schemes-in-dbms/"
+                target="_blank"
+                rel="noopener"
+                >GeeksforGeeks: Timestamp deadlock prevention schemes</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.cs.colostate.edu/~cs551/CourseNotes/Deadlock/WaitWoundDie.html"
+                target="_blank"
+                rel="noopener"
+                >Colorado State CS 551: Wait/wound/die algorithms</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://medium.com/@angusmacdonald/deadlock-in-database-systems-584ddb4f5dd5"
+                target="_blank"
+                rel="noopener"
+                >Deadlock in database systems</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://dev.mysql.com/doc/refman/8.0/en/innodb-deadlocks.html"
+                target="_blank"
+                rel="noopener"
+                >MySQL: Deadlocks in InnoDB</a
+              >
+            </li>
+          </ul>
+          <p class="foot">
+            Built from the lecture's audio transcript and whiteboard frames (15
+            min). Sections marked "Good to know" come from outside the video.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        // five transactions placed on a circle, centre (cx,cy), radius r
+        function ring(cx, cy, r, w, h) {
+          var n = [],
+            pos = [];
+          for (var i = 0; i < 5; i++) {
+            var a = ((-90 + i * 72) * Math.PI) / 180,
+              x = Math.round(cx + r * Math.cos(a)),
+              y = Math.round(cy + r * Math.sin(a));
+            pos.push([x, y]);
+            n.push({
+              t: "client",
+              x: x - w / 2,
+              y: y - h / 2,
+              w: w,
+              h: h,
+              l: "T" + (i + 1),
+            });
+          }
+          return { n: n, pos: pos };
+        }
+        // edge from node i to node j, trimmed to start/end outside the boxes
+        function link(p, i, j, trim) {
+          var a = p[i],
+            b = p[j],
+            dx = b[0] - a[0],
+            dy = b[1] - a[1],
+            L = Math.sqrt(dx * dx + dy * dy),
+            ux = dx / L,
+            uy = dy / L;
+          return [
+            [Math.round(a[0] + ux * trim), Math.round(a[1] + uy * trim)],
+            [Math.round(b[0] - ux * trim), Math.round(b[1] - uy * trim)],
+          ];
+        }
+        var H = ring(320, 108, 82, 64, 34);
+        var W = ring(320, 150, 110, 70, 38);
+
+        window.DIAGRAMS = {
+          hero: {
+            h: 220,
+            alt: "Wait-for graph cycle: T1 waits for T2, T2 for T3, T3 for T4, T4 for T5, T5 for T1",
+            n: H.n,
+            e: [
+              { p: link(H.pos, 0, 1, 30), bad: 1 },
+              { p: link(H.pos, 1, 2, 30), bad: 1 },
+              { p: link(H.pos, 2, 3, 30), bad: 1 },
+              { p: link(H.pos, 3, 4, 30), bad: 1 },
+              { p: link(H.pos, 4, 0, 30), bad: 1 },
+            ],
+            notes: [{ x: 320, y: 112, l: "deadlock", a: "middle", bad: 1 }],
+          },
+
+          timeout: {
+            h: 220,
+            alt: "Timeout: T1 waits a long time for a lock held by slow T2; the scheduler assumes deadlock and aborts T1, although T2 was only slow",
+            n: [
+              {
+                t: "client",
+                x: 20,
+                y: 70,
+                w: 150,
+                h: 60,
+                l: "T1",
+                s: "waiting… waiting…",
+              },
+              {
+                t: "db",
+                x: 250,
+                y: 64,
+                w: 140,
+                h: 72,
+                l: "Lock on A",
+                s: "held by T2",
+              },
+              {
+                t: "client",
+                x: 470,
+                y: 70,
+                w: 150,
+                h: 60,
+                l: "T2",
+                s: "slow, not stuck",
+              },
+              {
+                t: "lb",
+                x: 220,
+                y: 160,
+                w: 200,
+                h: 52,
+                l: "Scheduler",
+                s: "too long → abort T1",
+              },
+            ],
+            e: [
+              {
+                p: [
+                  [170, 100],
+                  [250, 100],
+                ],
+                bad: 1,
+                dash: 1,
+                l: "waits",
+                at: [210, 92],
+              },
+              {
+                p: [
+                  [470, 100],
+                  [390, 100],
+                ],
+                good: 1,
+                l: "holds",
+                at: [430, 92],
+              },
+              {
+                p: [
+                  [260, 166],
+                  [120, 130],
+                ],
+                bad: 1,
+                l: "abort ✕",
+                at: [170, 160],
+              },
+            ],
+            notes: [
+              {
+                x: 320,
+                y: 30,
+                l: "no deadlock here, but T1 is aborted anyway",
+                a: "middle",
+                bad: 1,
+              },
+            ],
+          },
+
+          wfg: {
+            h: 300,
+            alt: "Wait-for graph with five transactions in a cycle; an arrow Ti to Tj means Ti waits for Tj",
+            n: W.n,
+            e: [
+              { p: link(W.pos, 0, 1, 34), bad: 1 },
+              { p: link(W.pos, 1, 2, 34), bad: 1 },
+              { p: link(W.pos, 2, 3, 34), bad: 1 },
+              { p: link(W.pos, 3, 4, 34), bad: 1 },
+              { p: link(W.pos, 4, 0, 34), bad: 1 },
+            ],
+            notes: [
+              { x: 320, y: 146, l: "cycle =", a: "middle", bad: 1 },
+              { x: 320, y: 164, l: "deadlock", a: "middle", bad: 1 },
+              {
+                x: 20,
+                y: 24,
+                l: 'Ti → Tj : "Ti waits for Tj"',
+                a: "start",
+                strong: 1,
+              },
+              { x: 20, y: 44, l: "edge removed when Tj releases", a: "start" },
+            ],
+          },
+
+          victim: {
+            h: 270,
+            alt: "Two cycles share T3: T1 to T2 to T3 to T1 and T3 to T4 to T5 to T3; aborting T3 breaks both",
+            n: [
+              { t: "client", x: 40, y: 40, w: 80, h: 40, l: "T1" },
+              { t: "client", x: 40, y: 190, w: 80, h: 40, l: "T2" },
+              {
+                t: "client",
+                x: 275,
+                y: 115,
+                w: 90,
+                h: 44,
+                l: "T3",
+                s: "victim ✕",
+                down: 1,
+              },
+              { t: "client", x: 520, y: 40, w: 80, h: 40, l: "T4" },
+              { t: "client", x: 520, y: 190, w: 80, h: 40, l: "T5" },
+            ],
+            e: [
+              {
+                p: [
+                  [80, 80],
+                  [80, 190],
+                ],
+                bad: 1,
+              },
+              {
+                p: [
+                  [120, 200],
+                  [275, 150],
+                ],
+                bad: 1,
+                dash: 1,
+              },
+              {
+                p: [
+                  [275, 125],
+                  [120, 64],
+                ],
+                bad: 1,
+                dash: 1,
+              },
+              {
+                p: [
+                  [365, 125],
+                  [520, 64],
+                ],
+                bad: 1,
+                dash: 1,
+              },
+              {
+                p: [
+                  [560, 80],
+                  [560, 190],
+                ],
+                bad: 1,
+              },
+              {
+                p: [
+                  [520, 200],
+                  [365, 150],
+                ],
+                bad: 1,
+                dash: 1,
+              },
+            ],
+            notes: [
+              {
+                x: 320,
+                y: 258,
+                l: "T3 is in two cycles; aborting it breaks both",
+                a: "middle",
+                strong: 1,
+              },
+            ],
+          },
+
+          conservative: {
+            h: 240,
+            alt: "Conservative 2PL lock graph: lock count jumps to the maximum at the start, stays flat during work, then falls in the shrinking phase",
+            n: [
+              { t: "line", x: 80, y: 30, w: 0, h: 180 },
+              { t: "line", x: 80, y: 210, w: 520, h: 0 },
+              { t: "line", x: 300, y: 40, w: 0, h: 170 },
+            ],
+            e: [
+              {
+                p: [
+                  [80, 210],
+                  [80, 60],
+                  [300, 60],
+                ],
+                good: 1,
+                noarrow: 1,
+              },
+              {
+                p: [
+                  [300, 60],
+                  [360, 110],
+                  [420, 150],
+                  [500, 190],
+                  [580, 206],
+                ],
+                bad: 1,
+                noarrow: 1,
+              },
+            ],
+            notes: [
+              { x: 70, y: 126, l: "locks", a: "end" },
+              {
+                x: 190,
+                y: 48,
+                l: "all locks at the start",
+                a: "middle",
+                strong: 1,
+              },
+              { x: 190, y: 100, l: "work (no waiting)", a: "middle" },
+              { x: 450, y: 92, l: "release only", a: "middle", bad: 1 },
+              { x: 600, y: 232, l: "time →", a: "end" },
+            ],
+          },
+
+          allornone: {
+            h: 210,
+            alt: "Conservative 2PL: a transaction needs locks on A, B and C; C is held by another transaction, so it gets none and waits",
+            n: [
+              {
+                t: "client",
+                x: 20,
+                y: 70,
+                w: 150,
+                h: 64,
+                l: "T1 needs",
+                s: "A, B, C",
+              },
+              { t: "db", x: 280, y: 10, w: 120, h: 56, l: "A", s: "free" },
+              { t: "db", x: 280, y: 76, w: 120, h: 56, l: "B", s: "free" },
+              {
+                t: "db",
+                x: 280,
+                y: 142,
+                w: 120,
+                h: 56,
+                l: "C",
+                s: "held by T9",
+              },
+              {
+                t: "lb",
+                x: 470,
+                y: 76,
+                w: 150,
+                h: 56,
+                l: "Grant none",
+                s: "T1 waits",
+              },
+            ],
+            e: [
+              {
+                p: [
+                  [170, 92],
+                  [280, 38],
+                ],
+                dash: 1,
+              },
+              {
+                p: [
+                  [170, 102],
+                  [280, 104],
+                ],
+                dash: 1,
+              },
+              {
+                p: [
+                  [170, 112],
+                  [280, 170],
+                ],
+                bad: 1,
+              },
+              {
+                p: [
+                  [400, 104],
+                  [470, 104],
+                ],
+                bad: 1,
+              },
+            ],
+            notes: [
+              { x: 545, y: 160, l: "all or nothing", a: "middle", strong: 1 },
+            ],
+          },
+
+          ages: {
+            h: 300,
+            alt: "Wait-die and wound-wait: when older T1 requests a lock held by younger T2, wait-die makes T1 wait and wound-wait aborts T2; when younger T2 requests from older T1, wait-die aborts T2 and wound-wait makes T2 wait",
+            n: [
+              { t: "zone", x: 6, y: 8, w: 300, h: 284, l: "WAIT-DIE" },
+              {
+                t: "client",
+                x: 20,
+                y: 46,
+                w: 120,
+                h: 48,
+                l: "T1 · old",
+                s: "requests",
+              },
+              {
+                t: "db",
+                x: 170,
+                y: 44,
+                w: 120,
+                h: 52,
+                l: "held by",
+                s: "T2 · young",
+              },
+              {
+                t: "client",
+                x: 20,
+                y: 176,
+                w: 120,
+                h: 48,
+                l: "T2 · young",
+                s: "requests",
+              },
+              {
+                t: "db",
+                x: 170,
+                y: 174,
+                w: 120,
+                h: 52,
+                l: "held by",
+                s: "T1 · old",
+              },
+              { t: "zone", x: 334, y: 8, w: 300, h: 284, l: "WOUND-WAIT" },
+              {
+                t: "client",
+                x: 348,
+                y: 46,
+                w: 120,
+                h: 48,
+                l: "T1 · old",
+                s: "requests",
+              },
+              {
+                t: "db",
+                x: 498,
+                y: 44,
+                w: 120,
+                h: 52,
+                l: "held by",
+                s: "T2 · young",
+              },
+              {
+                t: "client",
+                x: 348,
+                y: 176,
+                w: 120,
+                h: 48,
+                l: "T2 · young",
+                s: "requests",
+              },
+              {
+                t: "db",
+                x: 498,
+                y: 174,
+                w: 120,
+                h: 52,
+                l: "held by",
+                s: "T1 · old",
+              },
+            ],
+            e: [
+              {
+                p: [
+                  [140, 70],
+                  [170, 70],
+                ],
+                dash: 1,
+              },
+              {
+                p: [
+                  [140, 200],
+                  [170, 200],
+                ],
+                bad: 1,
+              },
+              {
+                p: [
+                  [468, 70],
+                  [498, 70],
+                ],
+                good: 1,
+              },
+              {
+                p: [
+                  [468, 200],
+                  [498, 200],
+                ],
+                dash: 1,
+              },
+            ],
+            notes: [
+              { x: 156, y: 124, l: "old WAITS", a: "middle", strong: 1 },
+              { x: 156, y: 254, l: "young DIES ✕", a: "middle", bad: 1 },
+              { x: 484, y: 124, l: "old WOUNDS young ✕", a: "middle", bad: 1 },
+              { x: 484, y: 254, l: "young WAITS", a: "middle", strong: 1 },
+            ],
+          },
+        };
+      })();
+    </script>
+    <script>
+      (function () {
+        var D = window.DIAGRAMS || {};
+        function esc(s) {
+          return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        }
+        function label(n, cx, ty) {
+          var o = "";
+          if (n.s) {
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (ty - 3) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+            o +=
+              '<text class="ns" x="' +
+              cx +
+              '" y="' +
+              (ty + 12) +
+              '" text-anchor="middle">' +
+              esc(n.s) +
+              "</text>";
+          } else if (n.l) {
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (ty + 5) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+          }
+          return o;
+        }
+        function node(n) {
+          var o = "",
+            cx = n.x + n.w / 2,
+            cls = "n t-" + (n.c || n.t) + (n.down ? " down" : "");
+          if (n.t === "zone") {
+            return (
+              '<rect class="zone' +
+              (n.bad ? " bad" : "") +
+              '" x="' +
+              n.x +
+              '" y="' +
+              n.y +
+              '" width="' +
+              n.w +
+              '" height="' +
+              n.h +
+              '" rx="12"/>' +
+              (n.l
+                ? '<text class="zl' +
+                  (n.bad ? " bad" : "") +
+                  '" x="' +
+                  (n.x + 12) +
+                  '" y="' +
+                  (n.y + 17) +
+                  '">' +
+                  esc(n.l) +
+                  "</text>"
+                : "")
+            );
+          }
+          if (n.t === "line") {
+            // plain vertical/horizontal rule, e.g. sequence-diagram lifeline
+            return (
+              '<line class="life" x1="' +
+              n.x +
+              '" y1="' +
+              n.y +
+              '" x2="' +
+              (n.x + n.w) +
+              '" y2="' +
+              (n.y + n.h) +
+              '"/>'
+            );
+          }
+          if (n.t === "ring") {
+            // hash ring: centre (cx,cy), radius r, optional tick count + position numbers
+            var s =
+              '<circle class="ringc" cx="' +
+              n.cx +
+              '" cy="' +
+              n.cy +
+              '" r="' +
+              n.r +
+              '"/>';
+            for (var i = 0; i < (n.ticks || 0); i++) {
+              var a = ((-90 + (i * 360) / n.ticks) * Math.PI) / 180,
+                c = Math.cos(a),
+                si = Math.sin(a);
+              s +=
+                '<line class="tick" x1="' +
+                (n.cx + (n.r - 5) * c) +
+                '" y1="' +
+                (n.cy + (n.r - 5) * si) +
+                '" x2="' +
+                (n.cx + (n.r + 5) * c) +
+                '" y2="' +
+                (n.cy + (n.r + 5) * si) +
+                '"/>';
+              if (n.nums)
+                s +=
+                  '<text class="ringn" x="' +
+                  (n.cx + (n.r - 30) * c) +
+                  '" y="' +
+                  (n.cy + (n.r - 30) * si + 4) +
+                  '" text-anchor="middle">' +
+                  i +
+                  "</text>";
+            }
+            if (n.l)
+              s +=
+                '<text class="nt" x="' +
+                n.cx +
+                '" y="' +
+                (n.cy + 4) +
+                '" text-anchor="middle">' +
+                esc(n.l) +
+                "</text>";
+            return s;
+          }
+          var ty = n.y + n.h / 2;
+          if (n.t === "db") {
+            var e = 8,
+              x = n.x,
+              y = n.y,
+              w = n.w,
+              h = n.h;
+            o +=
+              '<path class="' +
+              cls.replace("t-db", "t-" + (n.c || "db")) +
+              '" d="M' +
+              x +
+              "," +
+              (y + e) +
+              " A" +
+              w / 2 +
+              "," +
+              e +
+              " 0 0 1 " +
+              (x + w) +
+              "," +
+              (y + e) +
+              " V" +
+              (y + h - e) +
+              " A" +
+              w / 2 +
+              "," +
+              e +
+              " 0 0 1 " +
+              x +
+              "," +
+              (y + h - e) +
+              ' Z"/>';
+            o +=
+              '<ellipse class="' +
+              cls.replace("t-db", "t-" + (n.c || "db")) +
+              '" cx="' +
+              cx +
+              '" cy="' +
+              (y + e) +
+              '" rx="' +
+              w / 2 +
+              '" ry="' +
+              e +
+              '"/>';
+            ty += e / 2;
+          } else if (n.t === "circle") {
+            o +=
+              '<circle class="' +
+              cls.replace("t-circle", "t-" + (n.c || "app")) +
+              '" cx="' +
+              cx +
+              '" cy="' +
+              ty +
+              '" r="' +
+              n.w / 2 +
+              '"/>';
+          } else {
+            o +=
+              '<rect class="' +
+              cls +
+              '" x="' +
+              n.x +
+              '" y="' +
+              n.y +
+              '" width="' +
+              n.w +
+              '" height="' +
+              n.h +
+              '" rx="9"/>';
+          }
+          if (n.slots) {
+            var pad = 16,
+              cw = (n.w - pad * 2 - 4 * 6) / 5,
+              cy = n.y + n.h - 30;
+            for (var i = 0; i < 5; i++)
+              o +=
+                '<rect class="slot" x="' +
+                (n.x + pad + i * (cw + 6)) +
+                '" y="' +
+                cy +
+                '" width="' +
+                cw +
+                '" height="16" rx="3"/>';
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (n.y + 24) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+            return o;
+          }
+          o += label(n, cx, ty);
+          if (n.down) {
+            o +=
+              '<text class="downx" x="' +
+              (n.w < 90 ? n.x + n.w / 2 : n.x + n.w - 4) +
+              '" y="' +
+              (n.w < 90 ? n.y - 4 : n.y + 14) +
+              '" text-anchor="' +
+              (n.w < 90 ? "middle" : "end") +
+              '">DOWN</text>';
+          }
+          return o;
+        }
+        function svg(key, d) {
+          var mid = "ah-" + key,
+            mbad = "ahb-" + key;
+          var o =
+            '<svg viewBox="0 0 640 ' +
+            d.h +
+            '" role="img" aria-label="' +
+            esc(d.alt || "Diagram") +
+            '">';
+          o +=
+            '<defs><marker id="' +
+            mid +
+            '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>' +
+            '<marker id="' +
+            mbad +
+            '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahb" d="M0,0 L10,5 L0,10 z"/></marker></defs>';
+          d.n.forEach(function (n) {
+            if (n.t === "zone" || n.t === "line" || n.t === "ring")
+              o += node(n);
+          });
+          (d.e || []).forEach(function (e) {
+            var pts = e.p
+              .map(function (p) {
+                return p.join(",");
+              })
+              .join(" ");
+            var m = e.bad ? mbad : mid;
+            o +=
+              '<polyline class="ed' +
+              (e.dash ? " dash" : "") +
+              (e.bad ? " bad" : "") +
+              (e.good ? " good" : "") +
+              '" points="' +
+              pts +
+              '"' +
+              (e.noarrow ? "" : ' marker-end="url(#' + m + ')"') +
+              (e.both ? ' marker-start="url(#' + m + ')"' : "") +
+              "/>";
+            if (e.cut) {
+              // a ✕ on a broken link
+              var c = e.cut;
+              o +=
+                '<text class="cutx" x="' +
+                c[0] +
+                '" y="' +
+                (c[1] + 6) +
+                '" text-anchor="middle">✕</text>';
+            }
+          });
+          d.n.forEach(function (n) {
+            if (n.t !== "zone" && n.t !== "line" && n.t !== "ring")
+              o += node(n);
+          });
+          (d.e || []).forEach(function (e) {
+            if (e.l)
+              o +=
+                '<text class="el' +
+                (e.bad ? " bad" : "") +
+                '" x="' +
+                e.at[0] +
+                '" y="' +
+                e.at[1] +
+                '" text-anchor="' +
+                (e.a || "middle") +
+                '">' +
+                esc(e.l) +
+                "</text>";
+          });
+          (d.notes || []).forEach(function (t) {
+            o +=
+              '<text class="nt' +
+              (t.bad ? " bad" : "") +
+              (t.strong ? " strong" : "") +
+              '" x="' +
+              t.x +
+              '" y="' +
+              t.y +
+              '" text-anchor="' +
+              (t.a || "start") +
+              '">' +
+              esc(t.l) +
+              "</text>";
+          });
+          return o + "</svg>";
+        }
+        document.querySelectorAll(".dg[data-d]").forEach(function (el) {
+          var k = el.getAttribute("data-d");
+          if (D[k]) el.innerHTML = svg(k, D[k]);
+        });
+        var links = [].slice.call(document.querySelectorAll("#rail a"));
+        if (links.length && "IntersectionObserver" in window) {
+          var io = new IntersectionObserver(
+            function (ents) {
+              ents.forEach(function (en) {
+                if (en.isIntersecting) {
+                  links.forEach(function (a) {
+                    a.classList.toggle(
+                      "on",
+                      a.getAttribute("href") === "#" + en.target.id,
+                    );
+                  });
+                }
+              });
+            },
+            { rootMargin: "-30% 0px -60% 0px" },
+          );
+          document.querySelectorAll("main .step").forEach(function (sec) {
+            io.observe(sec);
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
