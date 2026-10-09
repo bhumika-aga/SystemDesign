@@ -1,0 +1,2313 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>SOLID Principles</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+      }
+      img {
+        max-width: 100%;
+      }
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap"
+    />
+    <style>
+      :root {
+        --bg: #eef1f4;
+        --surface: #ffffff;
+        --sunk: #e3e8ed;
+        --ink: #15202b;
+        --muted: #56636f;
+        --rule: #d3dae1;
+        --line: #8795a2;
+        --accent: #0e7c7b;
+        --accent-soft: #d7efee;
+        --warn: #b45a12;
+        --warn-soft: #fbe9d8;
+        --c-client-f: #e7ebef;
+        --c-client-s: #56636f;
+        --c-lb-f: #ede8ff;
+        --c-lb-s: #6546d6;
+        --c-app-f: #e3ecff;
+        --c-app-s: #2d5fc4;
+        --c-db-f: #dff3e7;
+        --c-db-s: #23845a;
+        --c-cache-f: #ffe7de;
+        --c-cache-s: #c94c25;
+        --c-cdn-f: #d9f1f1;
+        --c-cdn-s: #0e8080;
+        --c-mq-f: #fff0d3;
+        --c-mq-s: #a8701a;
+        --display:
+          "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui,
+          sans-serif;
+        --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+        --mono:
+          "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          color-scheme: dark;
+          --bg: #0f151b;
+          --surface: #172029;
+          --sunk: #1d2833;
+          --ink: #e3e9ef;
+          --muted: #98a5b1;
+          --rule: #2a3643;
+          --line: #6a7988;
+          --accent: #4cc8c4;
+          --accent-soft: #12302f;
+          --warn: #f0a060;
+          --warn-soft: #35240f;
+          --c-client-f: #202a34;
+          --c-client-s: #94a2af;
+          --c-lb-f: #241e44;
+          --c-lb-s: #a48fff;
+          --c-app-f: #162844;
+          --c-app-s: #76a0ff;
+          --c-db-f: #132e1f;
+          --c-db-s: #52c68a;
+          --c-cache-f: #371c13;
+          --c-cache-s: #ff8b64;
+          --c-cdn-f: #0f2f2f;
+          --c-cdn-s: #41c9c9;
+          --c-mq-f: #36290e;
+          --c-mq-s: #e7ab48;
+        }
+      }
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #0f151b;
+        --surface: #172029;
+        --sunk: #1d2833;
+        --ink: #e3e9ef;
+        --muted: #98a5b1;
+        --rule: #2a3643;
+        --line: #6a7988;
+        --accent: #4cc8c4;
+        --accent-soft: #12302f;
+        --warn: #f0a060;
+        --warn-soft: #35240f;
+        --c-client-f: #202a34;
+        --c-client-s: #94a2af;
+        --c-lb-f: #241e44;
+        --c-lb-s: #a48fff;
+        --c-app-f: #162844;
+        --c-app-s: #76a0ff;
+        --c-db-f: #132e1f;
+        --c-db-s: #52c68a;
+        --c-cache-f: #371c13;
+        --c-cache-s: #ff8b64;
+        --c-cdn-f: #0f2f2f;
+        --c-cdn-s: #41c9c9;
+        --c-mq-f: #36290e;
+        --c-mq-s: #e7ab48;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--body);
+        font-size: 17px;
+        line-height: 1.62;
+        padding-inline: 20px;
+        padding-block: 0 64px;
+      }
+      a {
+        color: var(--accent);
+      }
+      a:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--display);
+        line-height: 1.12;
+        text-wrap: balance;
+        margin: 0;
+      }
+      h2 {
+        font-size: clamp(28px, 4.2vw, 38px);
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+      h3 {
+        font-size: 19px;
+        font-weight: 700;
+        margin-top: 28px;
+        margin-bottom: 6px;
+      }
+      p {
+        margin: 0 0 12px;
+      }
+      ul,
+      ol {
+        margin: 0 0 12px;
+        padding-left: 22px;
+      }
+      li {
+        margin-bottom: 6px;
+      }
+      li::marker {
+        color: var(--muted);
+      }
+      code,
+      .mono {
+        font-family: var(--mono);
+        font-size: 0.84em;
+      }
+      code {
+        background: var(--sunk);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      b,
+      strong {
+        font-weight: 600;
+      }
+
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 56px;
+      }
+      @media (max-width: 960px) {
+        .wrap {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .rail {
+          display: none;
+        }
+      }
+
+      /* hero */
+      .hero {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding-block: 48px 28px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+        gap: 40px;
+        align-items: end;
+      }
+      @media (max-width: 860px) {
+        .hero {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 20px;
+        }
+      }
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+      h1 {
+        font-size: clamp(44px, 7.4vw, 84px);
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        line-height: 0.95;
+      }
+      h1 .big {
+        color: var(--accent);
+      }
+      .hero .intro {
+        font-size: 18px;
+        margin-top: 18px;
+        max-width: 34em;
+        color: var(--ink);
+      }
+      .stairs {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .stairs text {
+        font-family: var(--mono);
+      }
+      .stairs .st {
+        fill: var(--sunk);
+        stroke: var(--rule);
+      }
+      .stairs a:hover .st,
+      .stairs a:focus .st {
+        fill: var(--accent-soft);
+        stroke: var(--accent);
+      }
+      .stairs .sn {
+        font-size: 13px;
+        font-weight: 600;
+        fill: var(--ink);
+      }
+      .stairs .sl {
+        font-size: 11.5px;
+        fill: var(--muted);
+      }
+      .stairs .star {
+        font-size: 13px;
+        fill: var(--warn);
+      }
+      .stairs .cap {
+        font-size: 11px;
+        fill: var(--muted);
+      }
+
+      .legend {
+        max-width: 1120px;
+        margin: 0 auto 36px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 18px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        align-items: center;
+        border-top: 1px solid var(--rule);
+        padding-top: 16px;
+      }
+      .legend i {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        border: 1.5px solid;
+        vertical-align: -2px;
+        margin-right: 6px;
+      }
+
+      /* rail */
+      .rail {
+        position: sticky;
+        top: env(safe-area-inset-top, 0px);
+        align-self: start;
+        padding-top: 8px;
+        max-height: 100vh;
+        overflow: auto;
+      }
+      .rail ol {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-family: var(--display);
+        font-size: 15px;
+      }
+      .rail li {
+        margin: 0;
+      }
+      .rail a {
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        gap: 6px;
+        padding: 7px 8px;
+        border-radius: 8px;
+        color: var(--muted);
+        text-decoration: none;
+        line-height: 1.3;
+      }
+      .rail a span {
+        font-family: var(--mono);
+        font-size: 12px;
+        padding-top: 2px;
+      }
+      .rail a:hover {
+        background: var(--sunk);
+        color: var(--ink);
+      }
+      .rail a.on {
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: 0 0 0 1px var(--rule);
+      }
+      .rail .head {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 10px 8px;
+      }
+
+      main {
+        min-width: 0;
+      }
+      .step {
+        padding-block: 40px;
+        border-top: 1px solid var(--rule);
+      }
+      .step:first-child {
+        border-top: 0;
+        padding-top: 4px;
+      }
+      .step > * {
+        max-width: 720px;
+      }
+      .step > figure {
+        max-width: 760px;
+      }
+      .snum {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .flag {
+        color: var(--warn);
+        background: var(--warn-soft);
+        padding: 2px 8px;
+        border-radius: 99px;
+        letter-spacing: 0.02em;
+        text-transform: none;
+      }
+      .lede {
+        font-size: 19px;
+        margin-top: 12px;
+        color: var(--ink);
+      }
+
+      .eli5 {
+        background: var(--accent-soft);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin: 22px 0;
+      }
+      .eli5 p:last-child {
+        margin-bottom: 0;
+      }
+      .tag {
+        display: block;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      .beyond {
+        border: 1px solid var(--rule);
+        background: var(--surface);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin: 24px 0 8px;
+      }
+      .beyond .tag {
+        color: var(--muted);
+      }
+      .beyond ul:last-child,
+      .beyond p:last-child {
+        margin-bottom: 0;
+      }
+      .handoff {
+        margin-top: 22px;
+        font-family: var(--display);
+        font-size: 16px;
+        color: var(--muted);
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+      }
+      .handoff b {
+        color: var(--warn);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      figure {
+        margin: 22px 0;
+        background: var(--surface);
+        border-radius: 14px;
+        padding: 16px 12px 10px;
+        box-shadow: 0 0 0 1px var(--rule);
+      }
+      figcaption {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        padding: 8px 8px 2px;
+        line-height: 1.5;
+      }
+      .dg {
+        overflow-x: auto;
+      }
+      .dg svg {
+        display: block;
+        width: 100%;
+        min-width: 540px;
+        max-width: 680px;
+        margin: 0 auto;
+        height: auto;
+      }
+      svg .n {
+        stroke-width: 1.6;
+      }
+      svg .t-client {
+        fill: var(--c-client-f);
+        stroke: var(--c-client-s);
+      }
+      svg .t-lb {
+        fill: var(--c-lb-f);
+        stroke: var(--c-lb-s);
+      }
+      svg .t-app {
+        fill: var(--c-app-f);
+        stroke: var(--c-app-s);
+      }
+      svg .t-db {
+        fill: var(--c-db-f);
+        stroke: var(--c-db-s);
+      }
+      svg .t-cache {
+        fill: var(--c-cache-f);
+        stroke: var(--c-cache-s);
+      }
+      svg .t-cdn {
+        fill: var(--c-cdn-f);
+        stroke: var(--c-cdn-s);
+      }
+      svg .t-mq {
+        fill: var(--c-mq-f);
+        stroke: var(--c-mq-s);
+      }
+      svg .slot {
+        fill: var(--surface);
+        stroke: var(--c-mq-s);
+        stroke-width: 1.2;
+      }
+      svg .zone {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 1.3;
+        stroke-dasharray: 5 5;
+      }
+      svg .zl {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.06em;
+        fill: var(--muted);
+      }
+      svg .nl {
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 13.5px;
+        fill: var(--ink);
+      }
+      svg .ns {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--muted);
+      }
+      svg .nt {
+        font-family: var(--mono);
+        font-size: 11px;
+        fill: var(--muted);
+      }
+      svg .ed {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 1.6;
+      }
+      svg .ed.dash {
+        stroke-dasharray: 5 4;
+      }
+      svg .ah {
+        fill: var(--line);
+      }
+      svg .el {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--ink);
+        paint-order: stroke;
+        stroke: var(--surface);
+        stroke-width: 5px;
+        stroke-linejoin: round;
+      }
+
+      /* latency bars */
+      .lat {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 8px 12px;
+        align-items: center;
+        font-family: var(--mono);
+        font-size: 13px;
+        padding: 6px 8px 4px;
+      }
+      .lat .bar {
+        height: 14px;
+        border-radius: 4px;
+        background: var(--c-cdn-s);
+        opacity: 0.85;
+      }
+      .lat .v {
+        font-variant-numeric: tabular-nums;
+        color: var(--muted);
+      }
+
+      /* sharding tables */
+      .shard {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+        justify-content: center;
+        padding: 8px 4px;
+      }
+      .tbl {
+        display: grid;
+        border: 1.5px solid var(--c-db-s);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--c-db-f);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+      .tbl div {
+        padding: 3px 8px;
+        border-top: 1px solid var(--rule);
+        white-space: nowrap;
+      }
+      .tbl div.h {
+        border-top: 0;
+        font-weight: 600;
+        background: var(--surface);
+        color: var(--ink);
+      }
+      .tbl .dim {
+        color: var(--muted);
+      }
+      .arrow {
+        font-family: var(--display);
+        font-size: 26px;
+        color: var(--line);
+      }
+      .tname {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        text-align: center;
+        margin-bottom: 4px;
+      }
+
+      /* exchange cards */
+      .xgrid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin: 18px 0;
+      }
+      @media (max-width: 620px) {
+        .xgrid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .x {
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      .x h4 {
+        font-family: var(--display);
+        font-size: 17px;
+        margin: 0 0 4px;
+      }
+      .x .rule {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--c-mq-s);
+        margin-bottom: 6px;
+      }
+      .x p {
+        font-size: 15.5px;
+        margin: 0;
+      }
+      .x .src {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-top: 8px;
+      }
+
+      /* compare table */
+      .tw {
+        overflow-x: auto;
+        margin: 16px 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 15px;
+        min-width: 560px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      td:first-child {
+        font-family: var(--display);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      /* quiz */
+      details {
+        border-top: 1px solid var(--rule);
+        padding: 12px 0;
+      }
+      details:last-of-type {
+        border-bottom: 1px solid var(--rule);
+      }
+      summary {
+        cursor: pointer;
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 17px;
+        list-style: none;
+        display: flex;
+        gap: 10px;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      summary::before {
+        content: "+";
+        font-family: var(--mono);
+        color: var(--accent);
+        width: 14px;
+        flex: none;
+      }
+      details[open] summary::before {
+        content: "–";
+      }
+      details p {
+        margin: 8px 0 0 24px;
+      }
+
+      .sources {
+        font-size: 15px;
+      }
+      .sources li {
+        margin-bottom: 4px;
+      }
+      .foot {
+        max-width: 720px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 28px;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .rail a {
+          transition: background 0.15s;
+        }
+      }
+
+      /* ── additions shared by lectures 1–4 ── */
+      svg .n.down {
+        opacity: 0.5;
+        stroke-dasharray: 4 3;
+      }
+      svg .downx {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        font-weight: 600;
+        fill: var(--warn);
+        letter-spacing: 0.06em;
+      }
+      svg .ed.bad {
+        stroke: var(--warn);
+      }
+      svg .ed.good {
+        stroke: var(--accent);
+      }
+      svg .ahb {
+        fill: var(--warn);
+      }
+      svg .el.bad,
+      svg .nt.bad {
+        fill: var(--warn);
+      }
+      svg .nt.strong {
+        fill: var(--ink);
+        font-weight: 600;
+      }
+      svg .cutx {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: 18px;
+        fill: var(--warn);
+        paint-order: stroke;
+        stroke: var(--surface);
+        stroke-width: 5px;
+      }
+      svg .zone.bad {
+        stroke: var(--warn);
+      }
+      svg .zl.bad {
+        fill: var(--warn);
+      }
+      svg .life {
+        stroke: var(--line);
+        stroke-width: 1.4;
+      }
+      svg .ringc {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 10;
+        stroke-opacity: 0.28;
+      }
+      svg .tick {
+        stroke: var(--line);
+        stroke-width: 1.2;
+      }
+      svg .ringn {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--muted);
+      }
+      svg circle.n {
+        stroke-width: 1.6;
+      }
+
+      /* worked calculations */
+      .calc {
+        font-family: var(--mono);
+        font-size: 13.5px;
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin: 16px 0;
+        overflow-x: auto;
+        line-height: 1.75;
+        font-variant-numeric: tabular-nums;
+      }
+      .calc .c {
+        color: var(--muted);
+      }
+      .calc b {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .tiles {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin: 18px 0;
+      }
+      @media (max-width: 720px) {
+        .tiles {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      .tile {
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px;
+      }
+      .tile b {
+        display: block;
+        font-family: var(--display);
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+      .tile span {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+      }
+
+      /* bit layout */
+      .bits {
+        display: flex;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1.5px solid var(--c-lb-s);
+        font-family: var(--mono);
+        font-size: 12px;
+        min-width: 520px;
+      }
+      .bits div {
+        padding: 10px 8px;
+        text-align: center;
+        border-left: 1px solid var(--c-lb-s);
+        background: var(--c-lb-f);
+      }
+      .bits div:first-child {
+        border-left: 0;
+        background: var(--sunk);
+      }
+      .bits b {
+        display: block;
+        font-family: var(--display);
+        font-size: 14px;
+      }
+      .code {
+        font-family: var(--mono);
+        font-size: 13px;
+        background: var(--sunk);
+        border-radius: 10px;
+        padding: 12px 14px;
+        overflow-x: auto;
+        white-space: pre;
+        line-height: 1.6;
+      }
+
+      .side {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .side .cap {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      /* OSI-style stack */
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-width: 460px;
+      }
+      .stack a,
+      .stack div {
+        display: grid;
+        grid-template-columns: 34px 1fr auto;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 14px;
+        border-radius: 10px;
+        background: var(--sunk);
+        color: var(--muted);
+        text-decoration: none;
+        font-family: var(--display);
+        font-size: 15px;
+      }
+      .stack .no {
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .stack .ex {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .stack .hot {
+        background: var(--accent-soft);
+        color: var(--ink);
+        box-shadow: inset 0 0 0 1.5px var(--accent);
+        font-weight: 700;
+      }
+      .stack .hot .ex {
+        color: var(--accent);
+      }
+
+      /* pattern cards in hero */
+      .pgrid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      @media (max-width: 520px) {
+        .pgrid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .pgrid a {
+        display: block;
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px;
+        text-decoration: none;
+        color: var(--ink);
+      }
+      .pgrid a:hover {
+        border-color: var(--accent);
+      }
+      .pgrid b {
+        display: block;
+        font-family: var(--display);
+        font-size: 20px;
+        font-weight: 800;
+      }
+      .pgrid span {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+        line-height: 1.45;
+      }
+      .pgrid .star {
+        color: var(--warn);
+      }
+
+      /* verdict pills in tables */
+      .pill {
+        display: inline-block;
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 99px;
+        white-space: nowrap;
+      }
+      .pill.yes {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .pill.no {
+        background: var(--warn-soft);
+        color: var(--warn);
+      }
+      td .mono {
+        font-size: 13px;
+      }
+
+      .two {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin: 18px 0;
+      }
+      @media (max-width: 620px) {
+        .two {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .two .x ul {
+        margin: 6px 0 0;
+        padding-left: 18px;
+        font-size: 15.5px;
+      }
+      .two .x li {
+        margin-bottom: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div>
+        <div class="eyebrow">LLD lecture 1 · study notes</div>
+        <h1><span class="big">SOLID</span> Principles</h1>
+        <p class="intro">
+          Five rules of thumb for object-oriented code that's easy to change.
+          You probably follow some already without knowing the names, but
+          interviewers ask for them by name. Each one below comes with the
+          lecture's Java example: the version that breaks the rule, and the fix.
+        </p>
+      </div>
+      <div class="side">
+        <span class="cap">Five letters, five habits</span>
+        <div class="dg"><div class="dg" data-d="hero"></div></div>
+      </div>
+    </header>
+
+    <div class="legend" aria-label="Diagram colour key">
+      <span>Colour key:</span>
+      <span
+        ><i style="background: var(--c-lb-f); border-color: var(--c-lb-s)"></i
+        >Interface</span
+      >
+      <span
+        ><i style="background: var(--c-app-f); border-color: var(--c-app-s)"></i
+        >Class</span
+      >
+      <span
+        ><i
+          style="background: var(--c-cache-f); border-color: var(--c-cache-s)"
+        ></i
+        >Newly added class</span
+      >
+      <span style="color: var(--warn)">orange = rule broken</span>
+    </div>
+
+    <div class="wrap">
+      <nav class="rail" aria-label="Sections">
+        <p class="head">In this lecture</p>
+        <ol id="rail">
+          <li>
+            <a href="#s0"><span>00</span>Why SOLID</a>
+          </li>
+          <li>
+            <a href="#s1"><span>S</span>Single responsibility</a>
+          </li>
+          <li>
+            <a href="#s2"><span>O</span>Open/closed</a>
+          </li>
+          <li>
+            <a href="#s3"><span>L</span>Liskov substitution</a>
+          </li>
+          <li>
+            <a href="#s4"><span>I</span>Interface segregation</a>
+          </li>
+          <li>
+            <a href="#s5"><span>D</span>Dependency inversion</a>
+          </li>
+          <li>
+            <a href="#s6"><span>→</span>Cheat sheet</a>
+          </li>
+          <li>
+            <a href="#extra"><span>+</span>Good to know</a>
+          </li>
+          <li>
+            <a href="#revise"><span>?</span>Revision</a>
+          </li>
+        </ol>
+      </nav>
+
+      <main>
+        <section class="step" id="s0">
+          <div class="snum">Why bother</div>
+          <h2>What SOLID buys you</h2>
+          <ul>
+            <li>Avoids <b>duplicate code</b>.</li>
+            <li>
+              Code is <b>easy to maintain</b> and <b>easy to understand</b>.
+            </li>
+            <li>
+              Software is <b>flexible</b>, and <b>complexity</b> is reduced.
+            </li>
+          </ul>
+          <p>
+            Design patterns (the rest of this LLD course) are largely these five
+            principles applied to recurring problems.
+          </p>
+        </section>
+
+        <section class="step" id="s1">
+          <div class="snum">S · Single responsibility principle</div>
+          <h2>"A class should have only one reason to change"</h2>
+          <p class="lede">
+            One class, one responsibility. If several unrelated kinds of change
+            would each force you to edit the same class, it's doing too much.
+          </p>
+          <h3>Breaks the rule</h3>
+          <div class="code">
+            class Marker { String name; String color; int year; int price; }
+            class Invoice { private Marker marker; private int quantity; //
+            reason 1: pricing (GST, discount…) public int calculateTotal() {
+            return marker.price * quantity; } // reason 2: print format public
+            void printInvoice() { /* print */ } // reason 3: storage public void
+            saveToDB() { /* save */ } }
+          </div>
+          <p>
+            <span class="mono">Invoice</span> has
+            <b>three reasons to change</b>: the price logic (add GST or a
+            discount), the printing logic, and the saving logic (DB or file).
+          </p>
+          <figure>
+            <div class="dg" data-d="srp"></div>
+            <figcaption>
+              One class with three jobs becomes three classes with one job each.
+              Now a printing change touches only InvoicePrinter.
+            </figcaption>
+          </figure>
+          <h3>Follows the rule</h3>
+          <div class="code">
+            class Invoice { // marker, quantity public int calculateTotal() { …
+            } } class InvoicePrinter { // holds an Invoice public void print() {
+            … } } class InvoiceDao { // holds an Invoice public void saveToDB()
+            { … } }
+          </div>
+          <p>
+            A pricing change now only touches <span class="mono">Invoice</span>,
+            and the other classes are unaffected. That's easier to maintain and
+            easier to understand.
+          </p>
+        </section>
+
+        <section class="step" id="s2">
+          <div class="snum">O · Open/closed principle</div>
+          <h2>"Open for extension, closed for modification"</h2>
+          <p class="lede">
+            Code that's already <b>tested and live</b> shouldn't be edited to
+            add features. Add new code that <b>extends</b> it instead.
+          </p>
+          <h3>Breaks the rule</h3>
+          <div class="code">
+            class InvoiceDao { public void saveToDB() { … } // tested, live in
+            production // ✕ new method edited into a tested class: risk of bugs
+            public void saveToFile() { … } }
+          </div>
+          <figure>
+            <div class="dg" data-d="ocp"></div>
+            <figcaption>
+              Make InvoiceDao an interface. Each way of saving is its own class,
+              so a new store (say MongoDB) is a new class, and nothing that's
+              already tested changes.
+            </figcaption>
+          </figure>
+          <h3>Follows the rule</h3>
+          <div class="code">
+            interface InvoiceDao { void save(Invoice invoice); } class
+            DatabaseInvoiceDao implements InvoiceDao { public void save(Invoice
+            i) { /* save to DB */ } } class FileInvoiceDao implements InvoiceDao
+            { public void save(Invoice i) { /* save to file */ } } // tomorrow:
+            class MongoInvoiceDao implements InvoiceDao { … } // ← extension, no
+            modification
+          </div>
+        </section>
+
+        <section class="step" id="s3">
+          <div class="snum">
+            L · Liskov substitution principle
+            <span class="flag">★ the tricky one</span>
+          </div>
+          <h2>"A subtype must be usable wherever its parent is"</h2>
+          <p class="lede">
+            If class B is a subtype of class A, you should be able to
+            <b
+              >replace an A object with a B object without breaking the
+              program's behaviour</b
+            >. The output may differ, but nothing should break.
+          </p>
+          <p>
+            Rule of thumb: a subclass should <b>extend</b> the parent's
+            capabilities (add features), <b>never narrow them down</b> (take
+            features away).
+          </p>
+          <figure>
+            <div class="dg" data-d="lsp"></div>
+            <figcaption>
+              MotorCycle can do everything a Bike promises. Bicycle can't turn
+              on an engine, so code that works with any Bike breaks when handed
+              a Bicycle.
+            </figcaption>
+          </figure>
+          <div class="code">
+            interface Bike { void turnOnEngine(); void accelerate(); } class
+            MotorCycle implements Bike { boolean isEngineOn; int speed; public
+            void turnOnEngine() { isEngineOn = true; } public void accelerate()
+            { speed = speed + 10; } } class Bicycle implements Bike { public
+            void turnOnEngine() { // ✕ narrows the parent throw new
+            AssertionError("there is no engine"); } public void accelerate() {
+            /* do something */ } }
+          </div>
+          <p>
+            Code that takes a <span class="mono">Bike</span> and calls
+            <span class="mono">turnOnEngine()</span> works with
+            <span class="mono">MotorCycle</span> but <b>crashes</b> with
+            <span class="mono">Bicycle</span>. The subtype isn't substitutable,
+            so LSP is broken. The solution is the next lecture (LLD 2).
+          </p>
+        </section>
+
+        <section class="step" id="s4">
+          <div class="snum">I · Interface segregation principle</div>
+          <h2>"Don't force classes to implement methods they don't need"</h2>
+          <p class="lede">
+            Split large interfaces into <b>small, focused</b> ones, so no client
+            has to implement functions it doesn't use.
+          </p>
+          <figure>
+            <div class="dg" data-d="isp"></div>
+            <figcaption>
+              One fat RestaurantEmployee interface forces Waiter to implement
+              cooking and washing. Split it into small interfaces and each class
+              implements only its own.
+            </figcaption>
+          </figure>
+          <h3>Breaks the rule</h3>
+          <div class="code">
+            interface RestaurantEmployee { void washDishes(); void
+            serveCustomers(); void cookFood(); } class Waiter implements
+            RestaurantEmployee { public void washDishes() { /* not my job ✕ */ }
+            public void serveCustomers() { System.out.println("serving the
+            customer"); } public void cookFood() { /* not my job ✕ */ } }
+          </div>
+          <h3>Follows the rule</h3>
+          <div class="code">
+            interface WaiterInterface { void serveCustomers(); void takeOrder();
+            } interface ChefInterface { void cookFood(); void decideMenu(); } //
+            (and e.g. a HelperInterface { void washDishes(); }) class Waiter
+            implements WaiterInterface { public void serveCustomers() {
+            System.out.println("serving the customer"); } public void
+            takeOrder() { System.out.println("taking orders"); } }
+          </div>
+        </section>
+
+        <section class="step" id="s5">
+          <div class="snum">D · Dependency inversion principle</div>
+          <h2>"Depend on interfaces, not concrete classes"</h2>
+          <figure>
+            <div class="dg" data-d="dip"></div>
+            <figcaption>
+              Left: MacBook is hard-wired to WiredKeyboard and WiredMouse.
+              Right: MacBook depends only on the Keyboard and Mouse interfaces,
+              and any implementation can be plugged in.
+            </figcaption>
+          </figure>
+          <h3>Breaks the rule</h3>
+          <div class="code">
+            class MacBook { private final WiredKeyboard keyboard; // ✕ concrete
+            classes private final WiredMouse mouse; public MacBook() { keyboard
+            = new WiredKeyboard(); // stuck with wired forever mouse = new
+            WiredMouse(); } }
+          </div>
+          <h3>Follows the rule</h3>
+          <div class="code">
+            class MacBook { private final Keyboard keyboard; // interfaces
+            private final Mouse mouse; // constructor injection public
+            MacBook(Keyboard keyboard, Mouse mouse) { this.keyboard = keyboard;
+            this.mouse = mouse; } } // any combination works new MacBook(new
+            WiredKeyboard(), new BluetoothMouse());
+          </div>
+          <p>
+            Now <span class="mono">MacBook</span> works with wired, Bluetooth,
+            or any mix, without changing its code.
+          </p>
+        </section>
+
+        <section class="step" id="s6">
+          <div class="snum">Cheat sheet</div>
+          <h2>SOLID at a glance</h2>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Principle</th>
+                  <th>One-liner</th>
+                  <th>Lecture example</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>S</b></td>
+                  <td>Single responsibility</td>
+                  <td>One reason to change</td>
+                  <td>
+                    Split Invoice into Invoice, InvoicePrinter, InvoiceDao
+                  </td>
+                </tr>
+                <tr>
+                  <td><b>O</b></td>
+                  <td>Open/closed</td>
+                  <td>Extend; don't edit tested code</td>
+                  <td>InvoiceDao interface + DB/File/Mongo classes</td>
+                </tr>
+                <tr>
+                  <td><b>L</b></td>
+                  <td>Liskov substitution</td>
+                  <td>Subtypes must be drop-in replacements</td>
+                  <td>Bicycle can't stand in for Bike</td>
+                </tr>
+                <tr>
+                  <td><b>I</b></td>
+                  <td>Interface segregation</td>
+                  <td>Small, focused interfaces</td>
+                  <td>Waiter vs chef interfaces</td>
+                </tr>
+                <tr>
+                  <td><b>D</b></td>
+                  <td>Dependency inversion</td>
+                  <td>Depend on abstractions</td>
+                  <td>MacBook takes Keyboard / Mouse interfaces</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="step" id="extra">
+          <div class="snum">
+            Beyond the course
+            <span class="flag">good to know as an engineer</span>
+          </div>
+          <h2>Good to know as an engineer</h2>
+
+          <h3>Sharper wording for each principle</h3>
+          <ul>
+            <li>
+              <b>S:</b> Robert C. Martin's later phrasing is "a module should be
+              responsible to <b>one actor</b>": one group of people who request
+              changes. Pricing rules come from finance, print layouts from
+              design, storage from the platform team. "Does one thing" is a
+              looser reading.
+            </li>
+            <li>
+              <b>O:</b> usually achieved with <b>polymorphism</b>: an interface
+              plus new implementations (exactly the Strategy pattern, LLD 6). It
+              doesn't forbid fixing bugs in existing code.
+            </li>
+            <li>
+              <b>L:</b> a subtype must not demand <em>more</em> from callers or
+              promise <em>less</em> back. The textbook example is
+              <b>Square extends Rectangle</b>: setting a square's width also
+              changes its height, which breaks code that expects to set them
+              independently.
+            </li>
+            <li>
+              <b>I:</b> a sign you need it is
+              <span class="mono">UnsupportedOperationException</span> or empty
+              method bodies in an implementation.
+            </li>
+            <li>
+              <b>D:</b> the full statement:
+              <b
+                >high-level modules shouldn't depend on low-level modules; both
+                should depend on abstractions</b
+              >, and the abstraction belongs with the high-level code.
+            </li>
+          </ul>
+
+          <h3>Dependency inversion vs dependency injection</h3>
+          <p>
+            They're related but different. <b>Inversion</b> is the design
+            principle: depend on an interface. <b>Injection</b> is a technique
+            for supplying the actual object from outside, like the constructor
+            in the MacBook example. Frameworks like Spring automate injection.
+          </p>
+
+          <h3>Don't overdo it</h3>
+          <p>
+            An interface for every class and a class for every method makes code
+            <em>harder</em> to follow. Apply SOLID where change is likely. YAGNI
+            ("you aren't gonna need it") and KISS are the counterweights.
+          </p>
+
+          <h3>History</h3>
+          <p>
+            The principles come from Robert C. Martin ("Uncle Bob"), notably his
+            2000 paper <em>Design Principles and Design Patterns</em>. The SOLID
+            acronym was coined a little later (often credited to Michael
+            Feathers). Liskov substitution is named after Barbara Liskov's 1987
+            work on subtyping.
+          </p>
+        </section>
+
+        <section class="step" id="revise">
+          <div class="snum">Check yourself</div>
+          <h2>Revision questions</h2>
+          <p class="lede">Try answering out loud before opening each one.</p>
+          <details>
+            <summary>What does each letter of SOLID stand for?</summary>
+            <p>
+              Single responsibility, Open/closed, Liskov substitution, Interface
+              segregation, Dependency inversion.
+            </p>
+          </details>
+          <details>
+            <summary>Why does the original Invoice class break SRP?</summary>
+            <p>
+              It has three reasons to change: price calculation, printing and
+              saving.
+            </p>
+          </details>
+          <details>
+            <summary>
+              How do you add "save to file" without breaking open/closed?
+            </summary>
+            <p>
+              Make InvoiceDao an interface and add a new FileInvoiceDao class,
+              instead of editing the tested database class.
+            </p>
+          </details>
+          <details>
+            <summary>State Liskov substitution in one sentence.</summary>
+            <p>
+              If B is a subtype of A, any A can be replaced by a B without
+              breaking the program's behaviour, so subclasses extend
+              capabilities and never narrow them.
+            </p>
+          </details>
+          <details>
+            <summary>Why does Bicycle break LSP?</summary>
+            <p>
+              It implements Bike but throws on turnOnEngine(), so code written
+              for any Bike crashes when given a Bicycle.
+            </p>
+          </details>
+          <details>
+            <summary>
+              What's wrong with one RestaurantEmployee interface?
+            </summary>
+            <p>
+              It forces Waiter to implement washDishes() and cookFood(), which
+              it doesn't need. Split it into smaller interfaces.
+            </p>
+          </details>
+          <details>
+            <summary>
+              How does the fixed MacBook follow dependency inversion?
+            </summary>
+            <p>
+              It holds Keyboard and Mouse interfaces, injected through the
+              constructor, so any wired or Bluetooth combination works without
+              code changes.
+            </p>
+          </details>
+
+          <h3>Sources used to expand these notes</h3>
+          <ul class="sources">
+            <li>
+              <a
+                href="https://dev.to/hosseinmolaei/solid-principles-from-the-perspective-of-robert-c-martin-5cd7"
+                target="_blank"
+                rel="noopener"
+                >SOLID from the perspective of Robert C. Martin</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://stackify.com/solid-design-principles/"
+                target="_blank"
+                rel="noopener"
+                >Stackify: SOLID design principles</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://people.engr.tamu.edu/choe/choe/courses/14summer/315/lectures/slide23.pdf"
+                target="_blank"
+                rel="noopener"
+                >Texas A&amp;M CSCE 315: SOLID principles (slides)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://gist.github.com/OddExtension5/5590a2a8197a31aa3bf1d4ca3ee20f83"
+                target="_blank"
+                rel="noopener"
+                >Summary of Robert Martin's SOLID principles</a
+              >
+            </li>
+          </ul>
+          <p class="foot">
+            Built from the lecture's audio transcript and on-screen code (19
+            min). Sections marked "Good to know" come from outside the video.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      window.DIAGRAMS = {
+        hero: {
+          h: 160,
+          alt: "The five SOLID letters: single responsibility, open/closed, Liskov substitution, interface segregation, dependency inversion",
+          n: [
+            { t: "lb", x: 6, y: 30, w: 116, h: 96, l: "S", s: "one job" },
+            {
+              t: "lb",
+              x: 134,
+              y: 30,
+              w: 116,
+              h: 96,
+              l: "O",
+              s: "extend, don't edit",
+            },
+            {
+              t: "lb",
+              x: 262,
+              y: 30,
+              w: 116,
+              h: 96,
+              l: "L",
+              s: "drop-in subtypes",
+            },
+            {
+              t: "lb",
+              x: 390,
+              y: 30,
+              w: 116,
+              h: 96,
+              l: "I",
+              s: "small interfaces",
+            },
+            {
+              t: "lb",
+              x: 518,
+              y: 30,
+              w: 116,
+              h: 96,
+              l: "D",
+              s: "use interfaces",
+            },
+          ],
+          e: [],
+        },
+
+        srp: {
+          h: 250,
+          alt: "Before: one Invoice class calculates the total, prints and saves to the database. After: Invoice calculates, InvoicePrinter prints, InvoiceDao saves",
+          n: [
+            {
+              t: "zone",
+              x: 6,
+              y: 8,
+              w: 220,
+              h: 234,
+              l: "BEFORE · 3 REASONS TO CHANGE",
+            },
+            {
+              t: "client",
+              x: 22,
+              y: 44,
+              w: 188,
+              h: 182,
+              l: "Invoice",
+              s: "calculate · print · save",
+            },
+            { t: "zone", x: 254, y: 8, w: 380, h: 234, l: "AFTER · ONE EACH" },
+            {
+              t: "app",
+              x: 270,
+              y: 44,
+              w: 348,
+              h: 52,
+              l: "Invoice",
+              s: "calculateTotal()",
+            },
+            {
+              t: "app",
+              x: 270,
+              y: 110,
+              w: 348,
+              h: 52,
+              l: "InvoicePrinter",
+              s: "print()",
+            },
+            {
+              t: "app",
+              x: 270,
+              y: 176,
+              w: 348,
+              h: 52,
+              l: "InvoiceDao",
+              s: "saveToDB()",
+            },
+          ],
+          e: [
+            {
+              p: [
+                [210, 135],
+                [270, 135],
+              ],
+              bad: 1,
+            },
+          ],
+          notes: [
+            {
+              x: 116,
+              y: 204,
+              l: "price + print + store ✕",
+              a: "middle",
+              bad: 1,
+            },
+          ],
+        },
+
+        ocp: {
+          h: 240,
+          alt: "InvoiceDao interface with DatabaseInvoiceDao and FileInvoiceDao implementations, and a new MongoInvoiceDao added without changing the others",
+          n: [
+            {
+              t: "lb",
+              x: 220,
+              y: 16,
+              w: 200,
+              h: 56,
+              l: "«interface» InvoiceDao",
+              s: "save(invoice)",
+            },
+            {
+              t: "app",
+              x: 20,
+              y: 150,
+              w: 180,
+              h: 60,
+              l: "DatabaseInvoiceDao",
+              s: "tested · untouched",
+            },
+            {
+              t: "app",
+              x: 230,
+              y: 150,
+              w: 180,
+              h: 60,
+              l: "FileInvoiceDao",
+              s: "tested · untouched",
+            },
+            {
+              t: "cache",
+              x: 440,
+              y: 150,
+              w: 180,
+              h: 60,
+              l: "MongoInvoiceDao",
+              s: "new: just add",
+            },
+          ],
+          e: [
+            {
+              p: [
+                [110, 150],
+                [280, 72],
+              ],
+            },
+            {
+              p: [
+                [320, 150],
+                [320, 72],
+              ],
+            },
+            {
+              p: [
+                [530, 150],
+                [360, 72],
+              ],
+              dash: 1,
+              good: 1,
+            },
+          ],
+          notes: [
+            {
+              x: 320,
+              y: 232,
+              l: "open for extension · closed for modification",
+              a: "middle",
+              strong: 1,
+            },
+          ],
+        },
+
+        lsp: {
+          h: 230,
+          alt: "Bike interface with MotorCycle, which can turn on its engine and accelerate, and Bicycle, which throws when asked to turn on an engine",
+          n: [
+            {
+              t: "lb",
+              x: 220,
+              y: 16,
+              w: 200,
+              h: 56,
+              l: "«interface» Bike",
+              s: "turnOnEngine() · accelerate()",
+            },
+            {
+              t: "app",
+              x: 40,
+              y: 140,
+              w: 220,
+              h: 64,
+              l: "MotorCycle ✓",
+              s: "engine on · speed + 10",
+            },
+            {
+              t: "client",
+              x: 380,
+              y: 140,
+              w: 220,
+              h: 64,
+              l: "Bicycle ✕",
+              s: "turnOnEngine() throws",
+            },
+          ],
+          e: [
+            {
+              p: [
+                [150, 140],
+                [290, 72],
+              ],
+              good: 1,
+            },
+            {
+              p: [
+                [490, 140],
+                [350, 72],
+              ],
+              bad: 1,
+              dash: 1,
+            },
+          ],
+          notes: [
+            {
+              x: 490,
+              y: 224,
+              l: "narrows the parent → breaks callers",
+              a: "middle",
+              bad: 1,
+            },
+          ],
+        },
+
+        isp: {
+          h: 270,
+          alt: "Before: Waiter implements a fat RestaurantEmployee interface including cook food and wash dishes. After: WaiterInterface and ChefInterface are separate, and Waiter and Chef each implement only their own",
+          n: [
+            {
+              t: "zone",
+              x: 6,
+              y: 8,
+              w: 290,
+              h: 254,
+              l: "BEFORE · ONE FAT INTERFACE",
+            },
+            {
+              t: "lb",
+              x: 22,
+              y: 40,
+              w: 258,
+              h: 70,
+              l: "RestaurantEmployee",
+              s: "washDishes · serveCustomers · cookFood",
+            },
+            {
+              t: "client",
+              x: 60,
+              y: 170,
+              w: 180,
+              h: 56,
+              l: "Waiter",
+              s: "forced to cook + wash ✕",
+            },
+            {
+              t: "zone",
+              x: 316,
+              y: 8,
+              w: 318,
+              h: 254,
+              l: "AFTER · SMALL INTERFACES",
+            },
+            {
+              t: "lb",
+              x: 330,
+              y: 40,
+              w: 140,
+              h: 70,
+              l: "WaiterInterface",
+              s: "serve · takeOrder",
+            },
+            {
+              t: "lb",
+              x: 480,
+              y: 40,
+              w: 140,
+              h: 70,
+              l: "ChefInterface",
+              s: "cook · decideMenu",
+            },
+            { t: "app", x: 330, y: 170, w: 140, h: 56, l: "Waiter" },
+            { t: "app", x: 480, y: 170, w: 140, h: 56, l: "Chef" },
+          ],
+          e: [
+            {
+              p: [
+                [150, 170],
+                [150, 110],
+              ],
+              bad: 1,
+            },
+            {
+              p: [
+                [400, 170],
+                [400, 110],
+              ],
+              good: 1,
+            },
+            {
+              p: [
+                [550, 170],
+                [550, 110],
+              ],
+              good: 1,
+            },
+          ],
+        },
+
+        dip: {
+          h: 270,
+          alt: "Left: MacBook depends directly on WiredKeyboard and WiredMouse. Right: MacBook depends on Keyboard and Mouse interfaces, implemented by wired and Bluetooth classes",
+          n: [
+            { t: "zone", x: 6, y: 8, w: 260, h: 254, l: "BREAKS · CONCRETE" },
+            { t: "client", x: 60, y: 40, w: 150, h: 50, l: "MacBook" },
+            { t: "app", x: 20, y: 170, w: 110, h: 50, l: "WiredKeyboard" },
+            { t: "app", x: 142, y: 170, w: 110, h: 50, l: "WiredMouse" },
+            {
+              t: "zone",
+              x: 286,
+              y: 8,
+              w: 348,
+              h: 254,
+              l: "FOLLOWS · INTERFACES",
+            },
+            { t: "client", x: 385, y: 30, w: 150, h: 44, l: "MacBook" },
+            {
+              t: "lb",
+              x: 300,
+              y: 110,
+              w: 150,
+              h: 46,
+              l: "«interface» Keyboard",
+            },
+            { t: "lb", x: 470, y: 110, w: 150, h: 46, l: "«interface» Mouse" },
+            { t: "app", x: 300, y: 196, w: 72, h: 46, l: "Wired" },
+            { t: "app", x: 378, y: 196, w: 72, h: 46, l: "Bluetooth" },
+            { t: "app", x: 470, y: 196, w: 72, h: 46, l: "Wired" },
+            { t: "app", x: 548, y: 196, w: 72, h: 46, l: "Bluetooth" },
+          ],
+          e: [
+            {
+              p: [
+                [110, 90],
+                [75, 170],
+              ],
+              bad: 1,
+            },
+            {
+              p: [
+                [160, 90],
+                [197, 170],
+              ],
+              bad: 1,
+            },
+            {
+              p: [
+                [430, 74],
+                [375, 110],
+              ],
+              good: 1,
+            },
+            {
+              p: [
+                [490, 74],
+                [545, 110],
+              ],
+              good: 1,
+            },
+            {
+              p: [
+                [336, 196],
+                [350, 156],
+              ],
+              dash: 1,
+            },
+            {
+              p: [
+                [414, 196],
+                [400, 156],
+              ],
+              dash: 1,
+            },
+            {
+              p: [
+                [506, 196],
+                [520, 156],
+              ],
+              dash: 1,
+            },
+            {
+              p: [
+                [584, 196],
+                [570, 156],
+              ],
+              dash: 1,
+            },
+          ],
+        },
+      };
+    </script>
+    <script>
+      (function () {
+        var D = window.DIAGRAMS || {};
+        function esc(s) {
+          return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        }
+        function label(n, cx, ty) {
+          var o = "";
+          if (n.s) {
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (ty - 3) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+            o +=
+              '<text class="ns" x="' +
+              cx +
+              '" y="' +
+              (ty + 12) +
+              '" text-anchor="middle">' +
+              esc(n.s) +
+              "</text>";
+          } else if (n.l) {
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (ty + 5) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+          }
+          return o;
+        }
+        function node(n) {
+          var o = "",
+            cx = n.x + n.w / 2,
+            cls = "n t-" + (n.c || n.t) + (n.down ? " down" : "");
+          if (n.t === "zone") {
+            return (
+              '<rect class="zone' +
+              (n.bad ? " bad" : "") +
+              '" x="' +
+              n.x +
+              '" y="' +
+              n.y +
+              '" width="' +
+              n.w +
+              '" height="' +
+              n.h +
+              '" rx="12"/>' +
+              (n.l
+                ? '<text class="zl' +
+                  (n.bad ? " bad" : "") +
+                  '" x="' +
+                  (n.x + 12) +
+                  '" y="' +
+                  (n.y + 17) +
+                  '">' +
+                  esc(n.l) +
+                  "</text>"
+                : "")
+            );
+          }
+          if (n.t === "line") {
+            // plain vertical/horizontal rule, e.g. sequence-diagram lifeline
+            return (
+              '<line class="life" x1="' +
+              n.x +
+              '" y1="' +
+              n.y +
+              '" x2="' +
+              (n.x + n.w) +
+              '" y2="' +
+              (n.y + n.h) +
+              '"/>'
+            );
+          }
+          if (n.t === "ring") {
+            // hash ring: centre (cx,cy), radius r, optional tick count + position numbers
+            var s =
+              '<circle class="ringc" cx="' +
+              n.cx +
+              '" cy="' +
+              n.cy +
+              '" r="' +
+              n.r +
+              '"/>';
+            for (var i = 0; i < (n.ticks || 0); i++) {
+              var a = ((-90 + (i * 360) / n.ticks) * Math.PI) / 180,
+                c = Math.cos(a),
+                si = Math.sin(a);
+              s +=
+                '<line class="tick" x1="' +
+                (n.cx + (n.r - 5) * c) +
+                '" y1="' +
+                (n.cy + (n.r - 5) * si) +
+                '" x2="' +
+                (n.cx + (n.r + 5) * c) +
+                '" y2="' +
+                (n.cy + (n.r + 5) * si) +
+                '"/>';
+              if (n.nums)
+                s +=
+                  '<text class="ringn" x="' +
+                  (n.cx + (n.r - 30) * c) +
+                  '" y="' +
+                  (n.cy + (n.r - 30) * si + 4) +
+                  '" text-anchor="middle">' +
+                  i +
+                  "</text>";
+            }
+            if (n.l)
+              s +=
+                '<text class="nt" x="' +
+                n.cx +
+                '" y="' +
+                (n.cy + 4) +
+                '" text-anchor="middle">' +
+                esc(n.l) +
+                "</text>";
+            return s;
+          }
+          var ty = n.y + n.h / 2;
+          if (n.t === "db") {
+            var e = 8,
+              x = n.x,
+              y = n.y,
+              w = n.w,
+              h = n.h;
+            o +=
+              '<path class="' +
+              cls.replace("t-db", "t-" + (n.c || "db")) +
+              '" d="M' +
+              x +
+              "," +
+              (y + e) +
+              " A" +
+              w / 2 +
+              "," +
+              e +
+              " 0 0 1 " +
+              (x + w) +
+              "," +
+              (y + e) +
+              " V" +
+              (y + h - e) +
+              " A" +
+              w / 2 +
+              "," +
+              e +
+              " 0 0 1 " +
+              x +
+              "," +
+              (y + h - e) +
+              ' Z"/>';
+            o +=
+              '<ellipse class="' +
+              cls.replace("t-db", "t-" + (n.c || "db")) +
+              '" cx="' +
+              cx +
+              '" cy="' +
+              (y + e) +
+              '" rx="' +
+              w / 2 +
+              '" ry="' +
+              e +
+              '"/>';
+            ty += e / 2;
+          } else if (n.t === "circle") {
+            o +=
+              '<circle class="' +
+              cls.replace("t-circle", "t-" + (n.c || "app")) +
+              '" cx="' +
+              cx +
+              '" cy="' +
+              ty +
+              '" r="' +
+              n.w / 2 +
+              '"/>';
+          } else {
+            o +=
+              '<rect class="' +
+              cls +
+              '" x="' +
+              n.x +
+              '" y="' +
+              n.y +
+              '" width="' +
+              n.w +
+              '" height="' +
+              n.h +
+              '" rx="9"/>';
+          }
+          if (n.slots) {
+            var pad = 16,
+              cw = (n.w - pad * 2 - 4 * 6) / 5,
+              cy = n.y + n.h - 30;
+            for (var i = 0; i < 5; i++)
+              o +=
+                '<rect class="slot" x="' +
+                (n.x + pad + i * (cw + 6)) +
+                '" y="' +
+                cy +
+                '" width="' +
+                cw +
+                '" height="16" rx="3"/>';
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (n.y + 24) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+            return o;
+          }
+          o += label(n, cx, ty);
+          if (n.down) {
+            o +=
+              '<text class="downx" x="' +
+              (n.w < 90 ? n.x + n.w / 2 : n.x + n.w - 4) +
+              '" y="' +
+              (n.w < 90 ? n.y - 4 : n.y + 14) +
+              '" text-anchor="' +
+              (n.w < 90 ? "middle" : "end") +
+              '">DOWN</text>';
+          }
+          return o;
+        }
+        function svg(key, d) {
+          var mid = "ah-" + key,
+            mbad = "ahb-" + key;
+          var o =
+            '<svg viewBox="0 0 640 ' +
+            d.h +
+            '" role="img" aria-label="' +
+            esc(d.alt || "Diagram") +
+            '">';
+          o +=
+            '<defs><marker id="' +
+            mid +
+            '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>' +
+            '<marker id="' +
+            mbad +
+            '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahb" d="M0,0 L10,5 L0,10 z"/></marker></defs>';
+          d.n.forEach(function (n) {
+            if (n.t === "zone" || n.t === "line" || n.t === "ring")
+              o += node(n);
+          });
+          (d.e || []).forEach(function (e) {
+            var pts = e.p
+              .map(function (p) {
+                return p.join(",");
+              })
+              .join(" ");
+            var m = e.bad ? mbad : mid;
+            o +=
+              '<polyline class="ed' +
+              (e.dash ? " dash" : "") +
+              (e.bad ? " bad" : "") +
+              (e.good ? " good" : "") +
+              '" points="' +
+              pts +
+              '"' +
+              (e.noarrow ? "" : ' marker-end="url(#' + m + ')"') +
+              (e.both ? ' marker-start="url(#' + m + ')"' : "") +
+              "/>";
+            if (e.cut) {
+              // a ✕ on a broken link
+              var c = e.cut;
+              o +=
+                '<text class="cutx" x="' +
+                c[0] +
+                '" y="' +
+                (c[1] + 6) +
+                '" text-anchor="middle">✕</text>';
+            }
+          });
+          d.n.forEach(function (n) {
+            if (n.t !== "zone" && n.t !== "line" && n.t !== "ring")
+              o += node(n);
+          });
+          (d.e || []).forEach(function (e) {
+            if (e.l)
+              o +=
+                '<text class="el' +
+                (e.bad ? " bad" : "") +
+                '" x="' +
+                e.at[0] +
+                '" y="' +
+                e.at[1] +
+                '" text-anchor="' +
+                (e.a || "middle") +
+                '">' +
+                esc(e.l) +
+                "</text>";
+          });
+          (d.notes || []).forEach(function (t) {
+            o +=
+              '<text class="nt' +
+              (t.bad ? " bad" : "") +
+              (t.strong ? " strong" : "") +
+              '" x="' +
+              t.x +
+              '" y="' +
+              t.y +
+              '" text-anchor="' +
+              (t.a || "start") +
+              '">' +
+              esc(t.l) +
+              "</text>";
+          });
+          return o + "</svg>";
+        }
+        document.querySelectorAll(".dg[data-d]").forEach(function (el) {
+          var k = el.getAttribute("data-d");
+          if (D[k]) el.innerHTML = svg(k, D[k]);
+        });
+        var links = [].slice.call(document.querySelectorAll("#rail a"));
+        if (links.length && "IntersectionObserver" in window) {
+          var io = new IntersectionObserver(
+            function (ents) {
+              ents.forEach(function (en) {
+                if (en.isIntersecting) {
+                  links.forEach(function (a) {
+                    a.classList.toggle(
+                      "on",
+                      a.getAttribute("href") === "#" + en.target.id,
+                    );
+                  });
+                }
+              });
+            },
+            { rootMargin: "-30% 0px -60% 0px" },
+          );
+          document.querySelectorAll("main .step").forEach(function (sec) {
+            io.observe(sec);
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
