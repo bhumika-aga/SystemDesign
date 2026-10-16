@@ -1,0 +1,2423 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Builder Pattern</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+      }
+      img {
+        max-width: 100%;
+      }
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap"
+    />
+    <style>
+      :root {
+        --bg: #eef1f4;
+        --surface: #ffffff;
+        --sunk: #e3e8ed;
+        --ink: #15202b;
+        --muted: #56636f;
+        --rule: #d3dae1;
+        --line: #8795a2;
+        --accent: #0e7c7b;
+        --accent-soft: #d7efee;
+        --warn: #b45a12;
+        --warn-soft: #fbe9d8;
+        --c-client-f: #e7ebef;
+        --c-client-s: #56636f;
+        --c-lb-f: #ede8ff;
+        --c-lb-s: #6546d6;
+        --c-app-f: #e3ecff;
+        --c-app-s: #2d5fc4;
+        --c-db-f: #dff3e7;
+        --c-db-s: #23845a;
+        --c-cache-f: #ffe7de;
+        --c-cache-s: #c94c25;
+        --c-cdn-f: #d9f1f1;
+        --c-cdn-s: #0e8080;
+        --c-mq-f: #fff0d3;
+        --c-mq-s: #a8701a;
+        --display:
+          "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui,
+          sans-serif;
+        --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+        --mono:
+          "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          color-scheme: dark;
+          --bg: #0f151b;
+          --surface: #172029;
+          --sunk: #1d2833;
+          --ink: #e3e9ef;
+          --muted: #98a5b1;
+          --rule: #2a3643;
+          --line: #6a7988;
+          --accent: #4cc8c4;
+          --accent-soft: #12302f;
+          --warn: #f0a060;
+          --warn-soft: #35240f;
+          --c-client-f: #202a34;
+          --c-client-s: #94a2af;
+          --c-lb-f: #241e44;
+          --c-lb-s: #a48fff;
+          --c-app-f: #162844;
+          --c-app-s: #76a0ff;
+          --c-db-f: #132e1f;
+          --c-db-s: #52c68a;
+          --c-cache-f: #371c13;
+          --c-cache-s: #ff8b64;
+          --c-cdn-f: #0f2f2f;
+          --c-cdn-s: #41c9c9;
+          --c-mq-f: #36290e;
+          --c-mq-s: #e7ab48;
+        }
+      }
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #0f151b;
+        --surface: #172029;
+        --sunk: #1d2833;
+        --ink: #e3e9ef;
+        --muted: #98a5b1;
+        --rule: #2a3643;
+        --line: #6a7988;
+        --accent: #4cc8c4;
+        --accent-soft: #12302f;
+        --warn: #f0a060;
+        --warn-soft: #35240f;
+        --c-client-f: #202a34;
+        --c-client-s: #94a2af;
+        --c-lb-f: #241e44;
+        --c-lb-s: #a48fff;
+        --c-app-f: #162844;
+        --c-app-s: #76a0ff;
+        --c-db-f: #132e1f;
+        --c-db-s: #52c68a;
+        --c-cache-f: #371c13;
+        --c-cache-s: #ff8b64;
+        --c-cdn-f: #0f2f2f;
+        --c-cdn-s: #41c9c9;
+        --c-mq-f: #36290e;
+        --c-mq-s: #e7ab48;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--body);
+        font-size: 17px;
+        line-height: 1.62;
+        padding-inline: 20px;
+        padding-block: 0 64px;
+      }
+      a {
+        color: var(--accent);
+      }
+      a:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--display);
+        line-height: 1.12;
+        text-wrap: balance;
+        margin: 0;
+      }
+      h2 {
+        font-size: clamp(28px, 4.2vw, 38px);
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+      h3 {
+        font-size: 19px;
+        font-weight: 700;
+        margin-top: 28px;
+        margin-bottom: 6px;
+      }
+      p {
+        margin: 0 0 12px;
+      }
+      ul,
+      ol {
+        margin: 0 0 12px;
+        padding-left: 22px;
+      }
+      li {
+        margin-bottom: 6px;
+      }
+      li::marker {
+        color: var(--muted);
+      }
+      code,
+      .mono {
+        font-family: var(--mono);
+        font-size: 0.84em;
+      }
+      code {
+        background: var(--sunk);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      b,
+      strong {
+        font-weight: 600;
+      }
+
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 56px;
+      }
+      @media (max-width: 960px) {
+        .wrap {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .rail {
+          display: none;
+        }
+      }
+
+      /* hero */
+      .hero {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding-block: 48px 28px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+        gap: 40px;
+        align-items: end;
+      }
+      @media (max-width: 860px) {
+        .hero {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 20px;
+        }
+      }
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+      h1 {
+        font-size: clamp(44px, 7.4vw, 84px);
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        line-height: 0.95;
+      }
+      h1 .big {
+        color: var(--accent);
+      }
+      .hero .intro {
+        font-size: 18px;
+        margin-top: 18px;
+        max-width: 34em;
+        color: var(--ink);
+      }
+      .stairs {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .stairs text {
+        font-family: var(--mono);
+      }
+      .stairs .st {
+        fill: var(--sunk);
+        stroke: var(--rule);
+      }
+      .stairs a:hover .st,
+      .stairs a:focus .st {
+        fill: var(--accent-soft);
+        stroke: var(--accent);
+      }
+      .stairs .sn {
+        font-size: 13px;
+        font-weight: 600;
+        fill: var(--ink);
+      }
+      .stairs .sl {
+        font-size: 11.5px;
+        fill: var(--muted);
+      }
+      .stairs .star {
+        font-size: 13px;
+        fill: var(--warn);
+      }
+      .stairs .cap {
+        font-size: 11px;
+        fill: var(--muted);
+      }
+
+      .legend {
+        max-width: 1120px;
+        margin: 0 auto 36px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 18px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        align-items: center;
+        border-top: 1px solid var(--rule);
+        padding-top: 16px;
+      }
+      .legend i {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        border: 1.5px solid;
+        vertical-align: -2px;
+        margin-right: 6px;
+      }
+
+      /* rail */
+      .rail {
+        position: sticky;
+        top: env(safe-area-inset-top, 0px);
+        align-self: start;
+        padding-top: 8px;
+        max-height: 100vh;
+        overflow: auto;
+      }
+      .rail ol {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-family: var(--display);
+        font-size: 15px;
+      }
+      .rail li {
+        margin: 0;
+      }
+      .rail a {
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        gap: 6px;
+        padding: 7px 8px;
+        border-radius: 8px;
+        color: var(--muted);
+        text-decoration: none;
+        line-height: 1.3;
+      }
+      .rail a span {
+        font-family: var(--mono);
+        font-size: 12px;
+        padding-top: 2px;
+      }
+      .rail a:hover {
+        background: var(--sunk);
+        color: var(--ink);
+      }
+      .rail a.on {
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: 0 0 0 1px var(--rule);
+      }
+      .rail .head {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 10px 8px;
+      }
+
+      main {
+        min-width: 0;
+      }
+      .step {
+        padding-block: 40px;
+        border-top: 1px solid var(--rule);
+      }
+      .step:first-child {
+        border-top: 0;
+        padding-top: 4px;
+      }
+      .step > * {
+        max-width: 720px;
+      }
+      .step > figure {
+        max-width: 760px;
+      }
+      .snum {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .flag {
+        color: var(--warn);
+        background: var(--warn-soft);
+        padding: 2px 8px;
+        border-radius: 99px;
+        letter-spacing: 0.02em;
+        text-transform: none;
+      }
+      .lede {
+        font-size: 19px;
+        margin-top: 12px;
+        color: var(--ink);
+      }
+
+      .eli5 {
+        background: var(--accent-soft);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin: 22px 0;
+      }
+      .eli5 p:last-child {
+        margin-bottom: 0;
+      }
+      .tag {
+        display: block;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      .beyond {
+        border: 1px solid var(--rule);
+        background: var(--surface);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin: 24px 0 8px;
+      }
+      .beyond .tag {
+        color: var(--muted);
+      }
+      .beyond ul:last-child,
+      .beyond p:last-child {
+        margin-bottom: 0;
+      }
+      .handoff {
+        margin-top: 22px;
+        font-family: var(--display);
+        font-size: 16px;
+        color: var(--muted);
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+      }
+      .handoff b {
+        color: var(--warn);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      figure {
+        margin: 22px 0;
+        background: var(--surface);
+        border-radius: 14px;
+        padding: 16px 12px 10px;
+        box-shadow: 0 0 0 1px var(--rule);
+      }
+      figcaption {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        padding: 8px 8px 2px;
+        line-height: 1.5;
+      }
+      .dg {
+        overflow-x: auto;
+      }
+      .dg svg {
+        display: block;
+        width: 100%;
+        min-width: 540px;
+        max-width: 680px;
+        margin: 0 auto;
+        height: auto;
+      }
+      svg .n {
+        stroke-width: 1.6;
+      }
+      svg .t-client {
+        fill: var(--c-client-f);
+        stroke: var(--c-client-s);
+      }
+      svg .t-lb {
+        fill: var(--c-lb-f);
+        stroke: var(--c-lb-s);
+      }
+      svg .t-app {
+        fill: var(--c-app-f);
+        stroke: var(--c-app-s);
+      }
+      svg .t-db {
+        fill: var(--c-db-f);
+        stroke: var(--c-db-s);
+      }
+      svg .t-cache {
+        fill: var(--c-cache-f);
+        stroke: var(--c-cache-s);
+      }
+      svg .t-cdn {
+        fill: var(--c-cdn-f);
+        stroke: var(--c-cdn-s);
+      }
+      svg .t-mq {
+        fill: var(--c-mq-f);
+        stroke: var(--c-mq-s);
+      }
+      svg .slot {
+        fill: var(--surface);
+        stroke: var(--c-mq-s);
+        stroke-width: 1.2;
+      }
+      svg .zone {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 1.3;
+        stroke-dasharray: 5 5;
+      }
+      svg .zl {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.06em;
+        fill: var(--muted);
+      }
+      svg .nl {
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 13.5px;
+        fill: var(--ink);
+      }
+      svg .ns {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--muted);
+      }
+      svg .nt {
+        font-family: var(--mono);
+        font-size: 11px;
+        fill: var(--muted);
+      }
+      svg .ed {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 1.6;
+      }
+      svg .ed.dash {
+        stroke-dasharray: 5 4;
+      }
+      svg .ah {
+        fill: var(--line);
+      }
+      svg .el {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--ink);
+        paint-order: stroke;
+        stroke: var(--surface);
+        stroke-width: 5px;
+        stroke-linejoin: round;
+      }
+
+      /* latency bars */
+      .lat {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 8px 12px;
+        align-items: center;
+        font-family: var(--mono);
+        font-size: 13px;
+        padding: 6px 8px 4px;
+      }
+      .lat .bar {
+        height: 14px;
+        border-radius: 4px;
+        background: var(--c-cdn-s);
+        opacity: 0.85;
+      }
+      .lat .v {
+        font-variant-numeric: tabular-nums;
+        color: var(--muted);
+      }
+
+      /* sharding tables */
+      .shard {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+        justify-content: center;
+        padding: 8px 4px;
+      }
+      .tbl {
+        display: grid;
+        border: 1.5px solid var(--c-db-s);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--c-db-f);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+      .tbl div {
+        padding: 3px 8px;
+        border-top: 1px solid var(--rule);
+        white-space: nowrap;
+      }
+      .tbl div.h {
+        border-top: 0;
+        font-weight: 600;
+        background: var(--surface);
+        color: var(--ink);
+      }
+      .tbl .dim {
+        color: var(--muted);
+      }
+      .arrow {
+        font-family: var(--display);
+        font-size: 26px;
+        color: var(--line);
+      }
+      .tname {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        text-align: center;
+        margin-bottom: 4px;
+      }
+
+      /* exchange cards */
+      .xgrid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin: 18px 0;
+      }
+      @media (max-width: 620px) {
+        .xgrid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .x {
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      .x h4 {
+        font-family: var(--display);
+        font-size: 17px;
+        margin: 0 0 4px;
+      }
+      .x .rule {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--c-mq-s);
+        margin-bottom: 6px;
+      }
+      .x p {
+        font-size: 15.5px;
+        margin: 0;
+      }
+      .x .src {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-top: 8px;
+      }
+
+      /* compare table */
+      .tw {
+        overflow-x: auto;
+        margin: 16px 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 15px;
+        min-width: 560px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      td:first-child {
+        font-family: var(--display);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      /* quiz */
+      details {
+        border-top: 1px solid var(--rule);
+        padding: 12px 0;
+      }
+      details:last-of-type {
+        border-bottom: 1px solid var(--rule);
+      }
+      summary {
+        cursor: pointer;
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 17px;
+        list-style: none;
+        display: flex;
+        gap: 10px;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      summary::before {
+        content: "+";
+        font-family: var(--mono);
+        color: var(--accent);
+        width: 14px;
+        flex: none;
+      }
+      details[open] summary::before {
+        content: "–";
+      }
+      details p {
+        margin: 8px 0 0 24px;
+      }
+
+      .sources {
+        font-size: 15px;
+      }
+      .sources li {
+        margin-bottom: 4px;
+      }
+      .foot {
+        max-width: 720px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 28px;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .rail a {
+          transition: background 0.15s;
+        }
+      }
+
+      /* ── additions shared by lectures 1–4 ── */
+      svg .n.down {
+        opacity: 0.5;
+        stroke-dasharray: 4 3;
+      }
+      svg .downx {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        font-weight: 600;
+        fill: var(--warn);
+        letter-spacing: 0.06em;
+      }
+      svg .ed.bad {
+        stroke: var(--warn);
+      }
+      svg .ed.good {
+        stroke: var(--accent);
+      }
+      svg .ahb {
+        fill: var(--warn);
+      }
+      svg .el.bad,
+      svg .nt.bad {
+        fill: var(--warn);
+      }
+      svg .nt.strong {
+        fill: var(--ink);
+        font-weight: 600;
+      }
+      svg .cutx {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: 18px;
+        fill: var(--warn);
+        paint-order: stroke;
+        stroke: var(--surface);
+        stroke-width: 5px;
+      }
+      svg .zone.bad {
+        stroke: var(--warn);
+      }
+      svg .zl.bad {
+        fill: var(--warn);
+      }
+      svg .life {
+        stroke: var(--line);
+        stroke-width: 1.4;
+      }
+      svg .ringc {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 10;
+        stroke-opacity: 0.28;
+      }
+      svg .tick {
+        stroke: var(--line);
+        stroke-width: 1.2;
+      }
+      svg .ringn {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--muted);
+      }
+      svg circle.n {
+        stroke-width: 1.6;
+      }
+
+      /* worked calculations */
+      .calc {
+        font-family: var(--mono);
+        font-size: 13.5px;
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin: 16px 0;
+        overflow-x: auto;
+        line-height: 1.75;
+        font-variant-numeric: tabular-nums;
+      }
+      .calc .c {
+        color: var(--muted);
+      }
+      .calc b {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .tiles {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin: 18px 0;
+      }
+      @media (max-width: 720px) {
+        .tiles {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      .tile {
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px;
+      }
+      .tile b {
+        display: block;
+        font-family: var(--display);
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+      .tile span {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+      }
+
+      /* bit layout */
+      .bits {
+        display: flex;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1.5px solid var(--c-lb-s);
+        font-family: var(--mono);
+        font-size: 12px;
+        min-width: 520px;
+      }
+      .bits div {
+        padding: 10px 8px;
+        text-align: center;
+        border-left: 1px solid var(--c-lb-s);
+        background: var(--c-lb-f);
+      }
+      .bits div:first-child {
+        border-left: 0;
+        background: var(--sunk);
+      }
+      .bits b {
+        display: block;
+        font-family: var(--display);
+        font-size: 14px;
+      }
+      .code {
+        font-family: var(--mono);
+        font-size: 13px;
+        background: var(--sunk);
+        border-radius: 10px;
+        padding: 12px 14px;
+        overflow-x: auto;
+        white-space: pre;
+        line-height: 1.6;
+      }
+
+      pre.code {
+        margin: 0 0 12px;
+      }
+
+      .side {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .side .cap {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      /* OSI-style stack */
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-width: 460px;
+      }
+      .stack a,
+      .stack div {
+        display: grid;
+        grid-template-columns: 34px 1fr auto;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 14px;
+        border-radius: 10px;
+        background: var(--sunk);
+        color: var(--muted);
+        text-decoration: none;
+        font-family: var(--display);
+        font-size: 15px;
+      }
+      .stack .no {
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .stack .ex {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .stack .hot {
+        background: var(--accent-soft);
+        color: var(--ink);
+        box-shadow: inset 0 0 0 1.5px var(--accent);
+        font-weight: 700;
+      }
+      .stack .hot .ex {
+        color: var(--accent);
+      }
+
+      /* pattern cards in hero */
+      .pgrid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      @media (max-width: 520px) {
+        .pgrid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .pgrid a {
+        display: block;
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px;
+        text-decoration: none;
+        color: var(--ink);
+      }
+      .pgrid a:hover {
+        border-color: var(--accent);
+      }
+      .pgrid b {
+        display: block;
+        font-family: var(--display);
+        font-size: 20px;
+        font-weight: 800;
+      }
+      .pgrid span {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+        line-height: 1.45;
+      }
+      .pgrid .star {
+        color: var(--warn);
+      }
+
+      /* verdict pills in tables */
+      .pill {
+        display: inline-block;
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 99px;
+        white-space: nowrap;
+      }
+      .pill.yes {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .pill.no {
+        background: var(--warn-soft);
+        color: var(--warn);
+      }
+      td .mono {
+        font-size: 13px;
+      }
+
+      .two {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin: 18px 0;
+      }
+      @media (max-width: 620px) {
+        .two {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .two .x ul {
+        margin: 6px 0 0;
+        padding-left: 18px;
+        font-size: 15.5px;
+      }
+      .two .x li {
+        margin-bottom: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div>
+        <div class="eyebrow">
+          LLD lecture 4 · creational patterns · study notes
+        </div>
+        <h1><span class="big">Builder</span> Pattern</h1>
+        <p class="intro">
+          For objects with lots of optional fields. Instead of a giant
+          constructor, you set fields one step at a time on a <b>builder</b>,
+          then call <span class="mono">build()</span> to get the finished
+          object. You already use one: <span class="mono">StringBuilder</span>.
+        </p>
+      </div>
+      <div class="side">
+        <span class="cap">Step by step, then build()</span>
+        <div class="dg" data-d="hero"></div>
+      </div>
+    </header>
+
+    <div class="legend" aria-label="Diagram colour key">
+      <span>Colour key:</span>
+      <span
+        ><i
+          style="background: var(--c-cache-f); border-color: var(--c-cache-s)"
+        ></i
+        >Builder / step</span
+      >
+      <span
+        ><i style="background: var(--c-db-f); border-color: var(--c-db-s)"></i
+        >Final object</span
+      >
+      <span
+        ><i style="background: var(--c-lb-f); border-color: var(--c-lb-s)"></i
+        >Abstract class</span
+      >
+      <span
+        ><i style="background: var(--c-app-f); border-color: var(--c-app-s)"></i
+        >Class</span
+      >
+      <span style="color: var(--warn)">orange = problem</span>
+    </div>
+
+    <div class="wrap">
+      <nav class="rail" aria-label="Sections">
+        <p class="head">In this lecture</p>
+        <ol id="rail">
+          <li>
+            <a href="#s0"><span>00</span>The problem</a>
+          </li>
+          <li>
+            <a href="#s1"><span>01</span>Step-by-step creation</a>
+          </li>
+          <li>
+            <a href="#s2"><span>02</span>StringBuilder</a>
+          </li>
+          <li>
+            <a href="#s3"><span>03</span>The three layers</a>
+          </li>
+          <li>
+            <a href="#s4"><span>04</span>Director and client</a>
+          </li>
+          <li>
+            <a href="#s5"><span>05</span>Builder vs decorator</a>
+          </li>
+          <li>
+            <a href="#extra"><span>+</span>Good to know</a>
+          </li>
+          <li>
+            <a href="#revise"><span>?</span>Revision</a>
+          </li>
+        </ol>
+      </nav>
+
+      <main>
+        <section class="step" id="s0">
+          <div class="snum">00 · The problem</div>
+          <h2>Too many optional fields</h2>
+          <p class="lede">
+            A student has a roll number (<b>mandatory</b>) and lots of
+            <b>optional</b> fields. Real classes can have 50 or 100. How should
+            the constructor look?
+          </p>
+          <pre class="code">
+public class Student {
+    int rollNumber;          // mandatory
+    int age;                 // optional
+    String name;             // optional
+    String fatherName;       // optional
+    String motherName;       // optional
+    List&lt;String&gt; subjects;   // optional
+    String mobileNumber;     // optional
+}</pre
+          >
+
+          <h3>Problem 1: one huge constructor</h3>
+          <pre class="code">
+public Student(int rollNumber, int age, String name,
+               String fatherName, String motherName,
+               List&lt;String&gt; subjects, String mobileNumber) { … }
+// callers must pass every value, even the ones they don't have</pre
+          >
+
+          <h3>Problem 2: an explosion of small constructors</h3>
+          <pre class="code">
+public Student(int rollNumber, int age) { … }
+public Student(int rollNumber, int age, String name) { … }
+public Student(int rollNumber, String fatherName,
+               String motherName) { … }
+// … one more for every combination someone needs</pre
+          >
+
+          <h3>Problem 3: some combinations are impossible</h3>
+          <figure>
+            <div class="dg" data-d="clash"></div>
+            <figcaption>
+              Java tells constructors apart by parameter types, not names. "Roll
+              + father + student name" has the same signature as "roll + father
+              + mother", so it won't compile.
+            </figcaption>
+          </figure>
+          <p>
+            With four or five fields this is already messy. With 100 fields it's
+            unmanageable. That's the problem the builder pattern solves.
+          </p>
+        </section>
+
+        <section class="step" id="s1">
+          <div class="snum">01 · The idea</div>
+          <h2>Create the object step by step</h2>
+          <p class="lede">
+            Builder is a <b>creational</b> pattern that creates an object
+            <b>step by step</b>.
+          </p>
+          <div class="eli5">
+            <span class="tag">Like you're five</span>
+            <p>
+              A house isn't made in one go. First the walls, then the roof, then
+              the door, then the windows. Halfway through it's not a house yet,
+              just "a house being built". When everything is done, you say
+              "build!" and you get the house.
+            </p>
+          </div>
+          <ul>
+            <li>
+              Each step is a <b>method</b>: <span class="mono">addWall()</span>,
+              <span class="mono">addRoof()</span>, …
+            </li>
+            <li>
+              After each step the object is still in an
+              <b>intermediate form</b>: the builder. So every step method
+              <b>returns the builder itself</b>.
+            </li>
+            <li>
+              A final <span class="mono">build()</span> method returns the
+              <b>real object</b> (the House).
+            </li>
+          </ul>
+        </section>
+
+        <section class="step" id="s2">
+          <div class="snum">02 · You already use it</div>
+          <h2>StringBuilder is a builder</h2>
+          <pre class="code">
+String s = new StringBuilder()
+        .append("Hello")         // returns StringBuilder
+        .append(", ")            // returns StringBuilder
+        .append("world")         // returns StringBuilder
+        .toString();             // returns the real object: a String</pre
+          >
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Builder idea</th>
+                  <th>StringBuilder</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Step methods</td>
+                  <td>
+                    <span class="mono">append</span>,
+                    <span class="mono">insert</span>,
+                    <span class="mono">delete</span>,
+                    <span class="mono">deleteCharAt</span>…
+                  </td>
+                </tr>
+                <tr>
+                  <td>Steps return</td>
+                  <td>
+                    The builder itself (<span class="mono">StringBuilder</span>)
+                  </td>
+                </tr>
+                <tr>
+                  <td>Final method</td>
+                  <td>
+                    <span class="mono">toString()</span> (plays the role of
+                    <span class="mono">build()</span>)
+                  </td>
+                </tr>
+                <tr>
+                  <td>Final object</td>
+                  <td>A new <span class="mono">String</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="step" id="s3">
+          <div class="snum">03 · Builder for Student</div>
+          <h2>Three layers: product, builder, director</h2>
+          <figure>
+            <div class="dg" data-d="structure"></div>
+            <figcaption>
+              The client only talks to the Director. The Director calls the
+              builder's steps in order, then build(), which creates the Student.
+            </figcaption>
+          </figure>
+
+          <h3>Layer 1: the product takes a builder</h3>
+          <p>
+            No long parameter list, no pile of small constructors: the
+            constructor receives a builder and copies its values.
+          </p>
+          <pre class="code">
+public class Student {
+    int rollNumber;
+    int age;
+    String name;
+    String fatherName;
+    String motherName;
+    List&lt;String&gt; subjects;
+
+    public Student(StudentBuilder builder) {
+        this.rollNumber = builder.rollNumber;
+        this.age        = builder.age;
+        this.name       = builder.name;
+        this.fatherName = builder.fatherName;
+        this.motherName = builder.motherName;
+        this.subjects   = builder.subjects;
+    }
+}</pre
+          >
+
+          <h3>Layer 2: the builder holds the same fields</h3>
+          <p>
+            It's abstract (or an interface), so there can be several concrete
+            builders.
+          </p>
+          <pre class="code">
+public abstract class StudentBuilder {
+    int rollNumber;
+    int age;
+    String name;
+    String fatherName;
+    String motherName;
+    List&lt;String&gt; subjects;
+
+    public StudentBuilder setRollNumber(int rollNumber) {
+        this.rollNumber = rollNumber;
+        return this;                   // still a builder
+    }
+    public StudentBuilder setAge(int age) {
+        this.age = age;
+        return this;
+    }
+    public StudentBuilder setName(String name) {
+        this.name = name;
+        return this;
+    }
+    // setFatherName, setMotherName: same shape
+
+    abstract public StudentBuilder setSubjects();
+
+    public Student build() {
+        return new Student(this);      // the real object
+    }
+}</pre
+          >
+          <p>The concrete builders differ only in the subjects:</p>
+          <pre class="code">
+public class EngineeringStudentBuilder extends StudentBuilder {
+    @Override
+    public StudentBuilder setSubjects() {
+        List&lt;String&gt; subs = new ArrayList&lt;&gt;();
+        subs.add("DSA");
+        subs.add("OS");
+        subs.add("Computer Architecture");
+        this.subjects = subs;
+        return this;
+    }
+}
+
+public class MBAStudentBuilder extends StudentBuilder {
+    @Override
+    public StudentBuilder setSubjects() {
+        List&lt;String&gt; subs = new ArrayList&lt;&gt;();
+        subs.add("Micro Economics");
+        subs.add("Business Studies");
+        subs.add("Operations Management");
+        this.subjects = subs;
+        return this;
+    }
+}</pre
+          >
+          <p>
+            <span class="pill no">trade-off</span> Every field is written twice,
+            in <span class="mono">Student</span> and in
+            <span class="mono">StudentBuilder</span>. Builders mean more lines
+            of code and some duplication.
+          </p>
+        </section>
+
+        <section class="step" id="s4">
+          <div class="snum">04 · Layer 3</div>
+          <h2>The director knows the recipe</h2>
+          <p class="lede">
+            The <b>director</b> holds a builder and calls its steps in the right
+            order, then <span class="mono">build()</span>. For a house it knows
+            "walls before roof". For students it knows which fields each kind
+            needs.
+          </p>
+          <figure>
+            <div class="dg" data-d="director"></div>
+            <figcaption>
+              Each recipe calls only the steps it needs: an MBA student also
+              gets father and mother names; an engineering student doesn't.
+            </figcaption>
+          </figure>
+          <pre class="code">
+public class Director {
+    StudentBuilder studentBuilder;
+
+    Director(StudentBuilder studentBuilder) {
+        this.studentBuilder = studentBuilder;
+    }
+
+    public Student createStudent() {
+        if (studentBuilder instanceof EngineeringStudentBuilder) {
+            return createEngineeringStudent();
+        } else if (studentBuilder instanceof MBAStudentBuilder) {
+            return createMBAStudent();
+        }
+        return null;
+    }
+
+    private Student createEngineeringStudent() {
+        return studentBuilder.setRollNumber(1).setAge(22)
+                .setName("Asha").setSubjects().build();
+    }
+
+    private Student createMBAStudent() {
+        return studentBuilder.setRollNumber(2).setAge(24)
+                .setName("Asha").setFatherName("MyFatherName")
+                .setMotherName("MyMotherName").setSubjects().build();
+    }
+}</pre
+          >
+          <p>The client just picks a builder and asks for a student:</p>
+          <pre class="code">
+public class Client {
+    public static void main(String args[]) {
+        Director d1 = new Director(new EngineeringStudentBuilder());
+        Director d2 = new Director(new MBAStudentBuilder());
+
+        Student engineer = d1.createStudent();
+        Student mba      = d2.createStudent();
+    }
+}</pre
+          >
+          <p>
+            The client code is tiny: "make me a student". The director decides
+            which steps to run for that builder.
+          </p>
+        </section>
+
+        <section class="step" id="s5">
+          <div class="snum">05 · A common confusion</div>
+          <h2>Builder vs decorator</h2>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Builder</th>
+                  <th>Decorator</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Category</td>
+                  <td>Creational: creating an object</td>
+                  <td>Structural: composing objects into bigger structures</td>
+                </tr>
+                <tr>
+                  <td>Pizza</td>
+                  <td>
+                    Builder per recipe, director calls addCrust → addCheese →
+                    build
+                  </td>
+                  <td>Base pizza wrapped in Cheese, wrapped in Mushroom</td>
+                </tr>
+                <tr>
+                  <td>New combination</td>
+                  <td>Lecture: needs a new builder class</td>
+                  <td>Just wrap one more layer at run time</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <figure>
+            <div class="dg" data-d="vs"></div>
+            <figcaption>
+              The pizza example is what causes the confusion. In the lecture's
+              design each recipe is a builder class, so "cheese + mushroom"
+              needs a new one. Decorators stack at run time.
+            </figcaption>
+          </figure>
+          <p>
+            The lecture's conclusion:
+            <b>builder can't handle dynamic combinations; decorator can</b>.
+          </p>
+          <p>
+            <span class="pill no">nuance</span> That limit comes from writing
+            one builder per recipe. A single
+            <span class="mono">PizzaBuilder</span> with
+            <span class="mono">addCheese()</span> and
+            <span class="mono">addMushroom()</span> can build any combination at
+            run time. The clearer difference is <b>purpose</b>: a builder
+            <em>assembles data once</em> into a finished object, while
+            decorators <em>add behaviour</em> (like each topping adding to
+            <span class="mono">cost()</span>) by wrapping an existing object,
+            and you can keep wrapping it later.
+          </p>
+        </section>
+
+        <section class="step" id="extra">
+          <div class="snum">
+            Beyond the course
+            <span class="flag">good to know as an engineer</span>
+          </div>
+          <h2>Good to know as an engineer</h2>
+
+          <h3>The builder you'll see most: Effective Java's</h3>
+          <p>
+            Joshua Bloch's <em>Effective Java</em> (Item 2) popularised a
+            simpler builder with <b>no director</b>: a static nested class,
+            required fields in its constructor, optional fields as chained
+            setters, and a <span class="mono">build()</span> that validates.
+          </p>
+          <pre class="code">
+public final class Student {
+    private final int rollNumber;          // final: immutable
+    private final String name;
+    private final int age;
+
+    private Student(Builder b) {
+        rollNumber = b.rollNumber; name = b.name; age = b.age;
+    }
+
+    public static class Builder {
+        private final int rollNumber;      // required
+        private String name;               // optional
+        private int age;
+
+        public Builder(int roll) { this.rollNumber = roll; }
+        public Builder name(String v) { name = v; return this; }
+        public Builder age(int v)     { age = v;  return this; }
+
+        public Student build() {
+            if (age &lt; 0) throw new IllegalStateException("age");
+            return new Student(this);
+        }
+    }
+}
+
+Student s = new Student.Builder(42).name("Asha").age(20).build();</pre
+          >
+          <ul>
+            <li>
+              <b>Required fields can't be forgotten</b>: they go in the
+              builder's constructor. In the lecture's version, the mandatory
+              roll number could be skipped.
+            </li>
+            <li>
+              <b>Immutable result</b>: fields are
+              <span class="mono">final</span> and there are no setters on
+              <span class="mono">Student</span>.
+            </li>
+            <li>
+              Reads like <b>named parameters</b>:
+              <span class="mono">.name("Asha")</span> is clearer than the fourth
+              String in a constructor.
+            </li>
+          </ul>
+
+          <h3>Why not just use setters?</h3>
+          <p>
+            The "JavaBeans" style (<span class="mono">new Student()</span>
+            followed by setters) works, but the object is
+            <b>half-built and inconsistent</b> between calls, can't be
+            immutable, and can't validate all fields together. Bloch's verdict:
+            builders are easier to read than telescoping constructors and safer
+            than JavaBeans.
+          </p>
+
+          <h3>GoF director vs no director</h3>
+          <p>
+            In the original Gang of Four pattern, the director owns the
+            <b>construction sequence</b>, so the same steps can produce
+            different representations. It's worth having when the order matters
+            and is reused (documents, house plans, SQL queries). For plain data
+            objects, skip it. The lecture's
+            <span class="mono">instanceof</span> checks inside the director are
+            also a smell: every new builder means editing the director
+            (open/closed, lecture 1).
+          </p>
+
+          <h3>Builders in the wild</h3>
+          <ul>
+            <li>
+              <span class="mono">StringBuilder</span>,
+              <span class="mono">Stream.builder()</span>,
+              <span class="mono">HttpRequest.newBuilder()</span>,
+              <span class="mono">Locale.Builder</span>, Guava's
+              <span class="mono">ImmutableList.builder()</span>.
+            </li>
+            <li>
+              <b>Lombok</b> <span class="mono">@Builder</span> generates a Bloch
+              builder for you. It doesn't handle inheritance well; use
+              <span class="mono">@SuperBuilder</span> for class hierarchies.
+            </li>
+            <li>
+              Don't use a builder for small objects. A point with two
+              coordinates is fine with a constructor.
+            </li>
+          </ul>
+        </section>
+
+        <section class="step" id="revise">
+          <div class="snum">Check yourself</div>
+          <h2>Revision questions</h2>
+          <p class="lede">Try answering out loud before opening each one.</p>
+          <details>
+            <summary>
+              What three problems do many optional fields cause?
+            </summary>
+            <p>
+              A huge constructor parameter list, an explosion of small
+              constructors, and combinations that can't be written because two
+              constructors would have the same signature.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Why does Student(int, String fatherName, String name) clash with
+              Student(int, String fatherName, String motherName)?
+            </summary>
+            <p>
+              Both have the signature (int, String, String). Java ignores
+              parameter names when telling overloads apart, so it's a compile
+              error.
+            </p>
+          </details>
+          <details>
+            <summary>
+              What do the step methods of a builder return, and why?
+            </summary>
+            <p>
+              The builder itself, because the object is still in its
+              intermediate form. That's what lets you chain calls.
+            </p>
+          </details>
+          <details>
+            <summary>
+              How does StringBuilder map onto the builder pattern?
+            </summary>
+            <p>
+              append/insert/delete are the steps and return StringBuilder;
+              toString() is the final build step and returns a String.
+            </p>
+          </details>
+          <details>
+            <summary>
+              What are the three layers in the lecture's design?
+            </summary>
+            <p>
+              The product (Student, constructed from a builder), the builder
+              (abstract StudentBuilder plus Engineering/MBA builders), and the
+              director (calls the steps in order, then build()).
+            </p>
+          </details>
+          <details>
+            <summary>What's one downside of the builder pattern?</summary>
+            <p>
+              More code and duplication: every field exists in both the product
+              and the builder.
+            </p>
+          </details>
+          <details>
+            <summary>Builder vs decorator in one line?</summary>
+            <p>
+              Builder is creational: it assembles an object step by step.
+              Decorator is structural: it wraps an existing object to add
+              behaviour, and layers can be stacked at run time.
+            </p>
+          </details>
+          <details>
+            <summary>
+              How does the Effective Java builder make the mandatory field
+              impossible to forget?
+            </summary>
+            <p>
+              The required field is a parameter of the builder's own
+              constructor, so you can't create a builder without it.
+            </p>
+          </details>
+
+          <h3>Sources used to expand these notes</h3>
+          <ul class="sources">
+            <li>
+              <a
+                href="https://drdobbs.com/jvm/creating-and-destroying-java-objects-par/208403883?pgno=2"
+                target="_blank"
+                rel="noopener"
+                >Effective Java, Item 2: Consider a builder (Dr. Dobb's
+                excerpt)</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://blogs.oracle.com/javamagazine/post/exploring-joshua-blochs-builder-design-pattern-in-java"
+                target="_blank"
+                rel="noopener"
+                >Java Magazine: Exploring Joshua Bloch's Builder pattern</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://baerbak.cs.au.dk/c/swea/slides/pdf/W7-9%20Bloch%20Builder.pptx.pdf"
+                target="_blank"
+                rel="noopener"
+                >Aarhus University slides: Bloch Builder vs GoF Builder</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://howtodoinjava.com/design-patterns/creational/builder-pattern-in-java"
+                target="_blank"
+                rel="noopener"
+                >HowToDoInJava: Builder pattern in Java</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.besthub.dev/articles/master-java-builder-pattern-and-avoid-lombok-builder-superbuilder-pitfalls-f08a3639a8ae"
+                target="_blank"
+                rel="noopener"
+                >Lombok @Builder and @SuperBuilder pitfalls</a
+              >
+            </li>
+          </ul>
+          <p class="foot">
+            Built from the lecture's audio transcript, whiteboard and on-screen
+            code (27 min). Sections marked "Good to know" come from outside the
+            video.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        // a row of small step boxes joined by arrows
+        function steps(labels, y, x0, w, gap, last) {
+          var n = [],
+            e = [];
+          labels.forEach(function (l, i) {
+            var x = x0 + i * (w + gap),
+              isLast = i === labels.length - 1 && last;
+            n.push({
+              t: isLast ? "app" : "cache",
+              c: isLast ? "db" : undefined,
+              x: x,
+              y: y,
+              w: w,
+              h: 44,
+              l: l,
+            });
+            if (i)
+              e.push({
+                p: [
+                  [x - gap, y + 22],
+                  [x, y + 22],
+                ],
+              });
+          });
+          return { n: n, e: e };
+        }
+        var eng = steps(
+          ["roll", "age", "name", "subjects", "build()"],
+          40,
+          16,
+          78,
+          10,
+          true,
+        );
+        var mba = steps(
+          ["roll", "age", "name", "father", "mother", "subjects", "build()"],
+          142,
+          16,
+          78,
+          10,
+          true,
+        );
+
+        window.DIAGRAMS = {
+          hero: {
+            h: 160,
+            alt: "A house is built step by step: add wall, add roof, add door, add window. Each step still gives back the builder; build() finally returns the House",
+            n: [
+              {
+                t: "cache",
+                x: 6,
+                y: 36,
+                w: 96,
+                h: 60,
+                l: "add wall",
+                s: "step 1",
+              },
+              {
+                t: "cache",
+                x: 118,
+                y: 36,
+                w: 96,
+                h: 60,
+                l: "add roof",
+                s: "step 2",
+              },
+              {
+                t: "cache",
+                x: 230,
+                y: 36,
+                w: 96,
+                h: 60,
+                l: "add door",
+                s: "step 3",
+              },
+              {
+                t: "cache",
+                x: 342,
+                y: 36,
+                w: 96,
+                h: 60,
+                l: "add window",
+                s: "step 4",
+              },
+              {
+                t: "app",
+                c: "db",
+                x: 498,
+                y: 30,
+                w: 136,
+                h: 72,
+                l: "House",
+                s: "the real object",
+              },
+            ],
+            e: [
+              {
+                p: [
+                  [102, 66],
+                  [118, 66],
+                ],
+              },
+              {
+                p: [
+                  [214, 66],
+                  [230, 66],
+                ],
+              },
+              {
+                p: [
+                  [326, 66],
+                  [342, 66],
+                ],
+              },
+              {
+                p: [
+                  [438, 66],
+                  [498, 66],
+                ],
+                good: 1,
+                l: "build()",
+                at: [468, 58],
+              },
+            ],
+            notes: [
+              {
+                x: 320,
+                y: 140,
+                l: "each step returns the builder · build() returns the House",
+                a: "middle",
+                strong: 1,
+              },
+            ],
+          },
+
+          clash: {
+            h: 180,
+            alt: "Two constructors, Student with roll number, father name and mother name, and Student with roll number, father name and name, both have the signature int, String, String, so the code will not compile",
+            n: [
+              {
+                t: "client",
+                x: 10,
+                y: 20,
+                w: 290,
+                h: 56,
+                l: "Student(roll, fatherName, motherName)",
+                s: "(int, String, String)",
+              },
+              {
+                t: "client",
+                x: 10,
+                y: 104,
+                w: 290,
+                h: 56,
+                l: "Student(roll, fatherName, name)",
+                s: "(int, String, String)",
+              },
+              {
+                t: "client",
+                x: 390,
+                y: 58,
+                w: 240,
+                h: 64,
+                l: "Compile error ✕",
+                s: "same signature twice",
+              },
+            ],
+            e: [
+              {
+                p: [
+                  [300, 48],
+                  [390, 80],
+                ],
+                bad: 1,
+              },
+              {
+                p: [
+                  [300, 132],
+                  [390, 100],
+                ],
+                bad: 1,
+              },
+            ],
+          },
+
+          structure: {
+            h: 380,
+            alt: "Builder structure: the client asks the Director; the Director calls the steps on an abstract StudentBuilder; EngineeringStudentBuilder and MBAStudentBuilder extend it; build() returns the Student",
+            n: [
+              { t: "client", x: 6, y: 20, w: 100, h: 56, l: "Client" },
+              {
+                t: "app",
+                x: 150,
+                y: 20,
+                w: 160,
+                h: 56,
+                l: "Director",
+                s: "createStudent()",
+              },
+              {
+                t: "app",
+                c: "db",
+                x: 480,
+                y: 20,
+                w: 154,
+                h: 56,
+                l: "Student",
+                s: "the final object",
+              },
+              {
+                t: "lb",
+                x: 150,
+                y: 180,
+                w: 300,
+                h: 56,
+                l: "«abstract» StudentBuilder",
+                s: "setX() returns this · build()",
+              },
+              {
+                t: "cache",
+                x: 30,
+                y: 300,
+                w: 270,
+                h: 56,
+                l: "EngineeringStudentBuilder",
+                s: "subjects: DSA, OS, CA",
+              },
+              {
+                t: "cache",
+                x: 340,
+                y: 300,
+                w: 270,
+                h: 56,
+                l: "MBAStudentBuilder",
+                s: "subjects: economics…",
+              },
+            ],
+            e: [
+              {
+                p: [
+                  [106, 48],
+                  [150, 48],
+                ],
+              },
+              {
+                p: [
+                  [230, 76],
+                  [230, 180],
+                ],
+                l: "calls the steps",
+                at: [290, 128],
+              },
+              {
+                p: [
+                  [450, 208],
+                  [557, 208],
+                  [557, 76],
+                ],
+                good: 1,
+                l: "build()",
+                at: [557, 150],
+              },
+              {
+                p: [
+                  [165, 300],
+                  [250, 236],
+                ],
+              },
+              {
+                p: [
+                  [475, 300],
+                  [350, 236],
+                ],
+              },
+            ],
+          },
+
+          director: {
+            h: 210,
+            alt: "The Director's recipes. Engineering student: roll, age, name, subjects, then build. MBA student: roll, age, name, father, mother, subjects, then build",
+            n: [
+              {
+                t: "zone",
+                x: 6,
+                y: 8,
+                w: 628,
+                h: 90,
+                l: "ENGINEERING · DIRECTOR'S RECIPE",
+              },
+              {
+                t: "zone",
+                x: 6,
+                y: 110,
+                w: 628,
+                h: 90,
+                l: "MBA · DIRECTOR'S RECIPE",
+              },
+            ].concat(eng.n, mba.n),
+            e: eng.e.concat(mba.e),
+          },
+
+          vs: {
+            h: 270,
+            alt: "Builder: one builder class per pizza recipe, base plus cheese and base plus mushroom, so base plus cheese plus mushroom needs yet another class. Decorator: a base pizza wrapped in a cheese decorator wrapped in a mushroom decorator, combined at run time",
+            n: [
+              {
+                t: "zone",
+                x: 6,
+                y: 8,
+                w: 310,
+                h: 254,
+                l: "LECTURE'S BUILDER · 1 CLASS PER RECIPE",
+              },
+              {
+                t: "cache",
+                x: 22,
+                y: 42,
+                w: 278,
+                h: 52,
+                l: "Base + cheese builder",
+              },
+              {
+                t: "cache",
+                x: 22,
+                y: 110,
+                w: 278,
+                h: 52,
+                l: "Base + mushroom builder",
+              },
+              {
+                t: "client",
+                x: 22,
+                y: 178,
+                w: 278,
+                h: 60,
+                l: "Base + cheese + mushroom?",
+                s: "needs another builder class",
+              },
+              {
+                t: "zone",
+                x: 334,
+                y: 8,
+                w: 300,
+                h: 254,
+                l: "DECORATOR · WRAP AT RUN TIME",
+              },
+              { t: "zone", x: 350, y: 40, w: 268, h: 206, l: "MUSHROOM" },
+              { t: "zone", x: 366, y: 76, w: 236, h: 150, l: "CHEESE" },
+              { t: "app", x: 384, y: 116, w: 200, h: 84, l: "Base pizza" },
+            ],
+            e: [],
+          },
+        };
+      })();
+    </script>
+    <script>
+      (function () {
+        var D = window.DIAGRAMS || {};
+        function esc(s) {
+          return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        }
+        function label(n, cx, ty) {
+          var o = "";
+          if (n.s) {
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (ty - 3) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+            o +=
+              '<text class="ns" x="' +
+              cx +
+              '" y="' +
+              (ty + 12) +
+              '" text-anchor="middle">' +
+              esc(n.s) +
+              "</text>";
+          } else if (n.l) {
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (ty + 5) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+          }
+          return o;
+        }
+        function node(n) {
+          var o = "",
+            cx = n.x + n.w / 2,
+            cls = "n t-" + (n.c || n.t) + (n.down ? " down" : "");
+          if (n.t === "zone") {
+            return (
+              '<rect class="zone' +
+              (n.bad ? " bad" : "") +
+              '" x="' +
+              n.x +
+              '" y="' +
+              n.y +
+              '" width="' +
+              n.w +
+              '" height="' +
+              n.h +
+              '" rx="12"/>' +
+              (n.l
+                ? '<text class="zl' +
+                  (n.bad ? " bad" : "") +
+                  '" x="' +
+                  (n.x + 12) +
+                  '" y="' +
+                  (n.y + 17) +
+                  '">' +
+                  esc(n.l) +
+                  "</text>"
+                : "")
+            );
+          }
+          if (n.t === "line") {
+            // plain vertical/horizontal rule, e.g. sequence-diagram lifeline
+            return (
+              '<line class="life" x1="' +
+              n.x +
+              '" y1="' +
+              n.y +
+              '" x2="' +
+              (n.x + n.w) +
+              '" y2="' +
+              (n.y + n.h) +
+              '"/>'
+            );
+          }
+          if (n.t === "ring") {
+            // hash ring: centre (cx,cy), radius r, optional tick count + position numbers
+            var s =
+              '<circle class="ringc" cx="' +
+              n.cx +
+              '" cy="' +
+              n.cy +
+              '" r="' +
+              n.r +
+              '"/>';
+            for (var i = 0; i < (n.ticks || 0); i++) {
+              var a = ((-90 + (i * 360) / n.ticks) * Math.PI) / 180,
+                c = Math.cos(a),
+                si = Math.sin(a);
+              s +=
+                '<line class="tick" x1="' +
+                (n.cx + (n.r - 5) * c) +
+                '" y1="' +
+                (n.cy + (n.r - 5) * si) +
+                '" x2="' +
+                (n.cx + (n.r + 5) * c) +
+                '" y2="' +
+                (n.cy + (n.r + 5) * si) +
+                '"/>';
+              if (n.nums)
+                s +=
+                  '<text class="ringn" x="' +
+                  (n.cx + (n.r - 30) * c) +
+                  '" y="' +
+                  (n.cy + (n.r - 30) * si + 4) +
+                  '" text-anchor="middle">' +
+                  i +
+                  "</text>";
+            }
+            if (n.l)
+              s +=
+                '<text class="nt" x="' +
+                n.cx +
+                '" y="' +
+                (n.cy + 4) +
+                '" text-anchor="middle">' +
+                esc(n.l) +
+                "</text>";
+            return s;
+          }
+          var ty = n.y + n.h / 2;
+          if (n.t === "db") {
+            var e = 8,
+              x = n.x,
+              y = n.y,
+              w = n.w,
+              h = n.h;
+            o +=
+              '<path class="' +
+              cls.replace("t-db", "t-" + (n.c || "db")) +
+              '" d="M' +
+              x +
+              "," +
+              (y + e) +
+              " A" +
+              w / 2 +
+              "," +
+              e +
+              " 0 0 1 " +
+              (x + w) +
+              "," +
+              (y + e) +
+              " V" +
+              (y + h - e) +
+              " A" +
+              w / 2 +
+              "," +
+              e +
+              " 0 0 1 " +
+              x +
+              "," +
+              (y + h - e) +
+              ' Z"/>';
+            o +=
+              '<ellipse class="' +
+              cls.replace("t-db", "t-" + (n.c || "db")) +
+              '" cx="' +
+              cx +
+              '" cy="' +
+              (y + e) +
+              '" rx="' +
+              w / 2 +
+              '" ry="' +
+              e +
+              '"/>';
+            ty += e / 2;
+          } else if (n.t === "circle") {
+            o +=
+              '<circle class="' +
+              cls.replace("t-circle", "t-" + (n.c || "app")) +
+              '" cx="' +
+              cx +
+              '" cy="' +
+              ty +
+              '" r="' +
+              n.w / 2 +
+              '"/>';
+          } else {
+            o +=
+              '<rect class="' +
+              cls +
+              '" x="' +
+              n.x +
+              '" y="' +
+              n.y +
+              '" width="' +
+              n.w +
+              '" height="' +
+              n.h +
+              '" rx="9"/>';
+          }
+          if (n.slots) {
+            var pad = 16,
+              cw = (n.w - pad * 2 - 4 * 6) / 5,
+              cy = n.y + n.h - 30;
+            for (var i = 0; i < 5; i++)
+              o +=
+                '<rect class="slot" x="' +
+                (n.x + pad + i * (cw + 6)) +
+                '" y="' +
+                cy +
+                '" width="' +
+                cw +
+                '" height="16" rx="3"/>';
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (n.y + 24) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+            return o;
+          }
+          o += label(n, cx, ty);
+          if (n.down) {
+            o +=
+              '<text class="downx" x="' +
+              (n.w < 90 ? n.x + n.w / 2 : n.x + n.w - 4) +
+              '" y="' +
+              (n.w < 90 ? n.y - 4 : n.y + 14) +
+              '" text-anchor="' +
+              (n.w < 90 ? "middle" : "end") +
+              '">DOWN</text>';
+          }
+          return o;
+        }
+        function svg(key, d) {
+          var mid = "ah-" + key,
+            mbad = "ahb-" + key;
+          var o =
+            '<svg viewBox="0 0 640 ' +
+            d.h +
+            '" role="img" aria-label="' +
+            esc(d.alt || "Diagram") +
+            '">';
+          o +=
+            '<defs><marker id="' +
+            mid +
+            '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>' +
+            '<marker id="' +
+            mbad +
+            '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahb" d="M0,0 L10,5 L0,10 z"/></marker></defs>';
+          d.n.forEach(function (n) {
+            if (n.t === "zone" || n.t === "line" || n.t === "ring")
+              o += node(n);
+          });
+          (d.e || []).forEach(function (e) {
+            var pts = e.p
+              .map(function (p) {
+                return p.join(",");
+              })
+              .join(" ");
+            var m = e.bad ? mbad : mid;
+            o +=
+              '<polyline class="ed' +
+              (e.dash ? " dash" : "") +
+              (e.bad ? " bad" : "") +
+              (e.good ? " good" : "") +
+              '" points="' +
+              pts +
+              '"' +
+              (e.noarrow ? "" : ' marker-end="url(#' + m + ')"') +
+              (e.both ? ' marker-start="url(#' + m + ')"' : "") +
+              "/>";
+            if (e.cut) {
+              // a ✕ on a broken link
+              var c = e.cut;
+              o +=
+                '<text class="cutx" x="' +
+                c[0] +
+                '" y="' +
+                (c[1] + 6) +
+                '" text-anchor="middle">✕</text>';
+            }
+          });
+          d.n.forEach(function (n) {
+            if (n.t !== "zone" && n.t !== "line" && n.t !== "ring")
+              o += node(n);
+          });
+          (d.e || []).forEach(function (e) {
+            if (e.l)
+              o +=
+                '<text class="el' +
+                (e.bad ? " bad" : "") +
+                '" x="' +
+                e.at[0] +
+                '" y="' +
+                e.at[1] +
+                '" text-anchor="' +
+                (e.a || "middle") +
+                '">' +
+                esc(e.l) +
+                "</text>";
+          });
+          (d.notes || []).forEach(function (t) {
+            o +=
+              '<text class="nt' +
+              (t.bad ? " bad" : "") +
+              (t.strong ? " strong" : "") +
+              '" x="' +
+              t.x +
+              '" y="' +
+              t.y +
+              '" text-anchor="' +
+              (t.a || "start") +
+              '">' +
+              esc(t.l) +
+              "</text>";
+          });
+          return o + "</svg>";
+        }
+        document.querySelectorAll(".dg[data-d]").forEach(function (el) {
+          var k = el.getAttribute("data-d");
+          if (D[k]) el.innerHTML = svg(k, D[k]);
+        });
+        var links = [].slice.call(document.querySelectorAll("#rail a"));
+        if (links.length && "IntersectionObserver" in window) {
+          var io = new IntersectionObserver(
+            function (ents) {
+              ents.forEach(function (en) {
+                if (en.isIntersecting) {
+                  links.forEach(function (a) {
+                    a.classList.toggle(
+                      "on",
+                      a.getAttribute("href") === "#" + en.target.id,
+                    );
+                  });
+                }
+              });
+            },
+            { rootMargin: "-30% 0px -60% 0px" },
+          );
+          document.querySelectorAll("main .step").forEach(function (sec) {
+            io.observe(sec);
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
