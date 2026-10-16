@@ -1,0 +1,2454 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Factory and Abstract Factory</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+      }
+      img {
+        max-width: 100%;
+      }
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap"
+    />
+    <style>
+      :root {
+        --bg: #eef1f4;
+        --surface: #ffffff;
+        --sunk: #e3e8ed;
+        --ink: #15202b;
+        --muted: #56636f;
+        --rule: #d3dae1;
+        --line: #8795a2;
+        --accent: #0e7c7b;
+        --accent-soft: #d7efee;
+        --warn: #b45a12;
+        --warn-soft: #fbe9d8;
+        --c-client-f: #e7ebef;
+        --c-client-s: #56636f;
+        --c-lb-f: #ede8ff;
+        --c-lb-s: #6546d6;
+        --c-app-f: #e3ecff;
+        --c-app-s: #2d5fc4;
+        --c-db-f: #dff3e7;
+        --c-db-s: #23845a;
+        --c-cache-f: #ffe7de;
+        --c-cache-s: #c94c25;
+        --c-cdn-f: #d9f1f1;
+        --c-cdn-s: #0e8080;
+        --c-mq-f: #fff0d3;
+        --c-mq-s: #a8701a;
+        --display:
+          "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui,
+          sans-serif;
+        --body: "Source Serif 4", Georgia, "Times New Roman", serif;
+        --mono:
+          "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          color-scheme: dark;
+          --bg: #0f151b;
+          --surface: #172029;
+          --sunk: #1d2833;
+          --ink: #e3e9ef;
+          --muted: #98a5b1;
+          --rule: #2a3643;
+          --line: #6a7988;
+          --accent: #4cc8c4;
+          --accent-soft: #12302f;
+          --warn: #f0a060;
+          --warn-soft: #35240f;
+          --c-client-f: #202a34;
+          --c-client-s: #94a2af;
+          --c-lb-f: #241e44;
+          --c-lb-s: #a48fff;
+          --c-app-f: #162844;
+          --c-app-s: #76a0ff;
+          --c-db-f: #132e1f;
+          --c-db-s: #52c68a;
+          --c-cache-f: #371c13;
+          --c-cache-s: #ff8b64;
+          --c-cdn-f: #0f2f2f;
+          --c-cdn-s: #41c9c9;
+          --c-mq-f: #36290e;
+          --c-mq-s: #e7ab48;
+        }
+      }
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #0f151b;
+        --surface: #172029;
+        --sunk: #1d2833;
+        --ink: #e3e9ef;
+        --muted: #98a5b1;
+        --rule: #2a3643;
+        --line: #6a7988;
+        --accent: #4cc8c4;
+        --accent-soft: #12302f;
+        --warn: #f0a060;
+        --warn-soft: #35240f;
+        --c-client-f: #202a34;
+        --c-client-s: #94a2af;
+        --c-lb-f: #241e44;
+        --c-lb-s: #a48fff;
+        --c-app-f: #162844;
+        --c-app-s: #76a0ff;
+        --c-db-f: #132e1f;
+        --c-db-s: #52c68a;
+        --c-cache-f: #371c13;
+        --c-cache-s: #ff8b64;
+        --c-cdn-f: #0f2f2f;
+        --c-cdn-s: #41c9c9;
+        --c-mq-f: #36290e;
+        --c-mq-s: #e7ab48;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: var(--body);
+        font-size: 17px;
+        line-height: 1.62;
+        padding-inline: 20px;
+        padding-block: 0 64px;
+      }
+      a {
+        color: var(--accent);
+      }
+      a:focus-visible,
+      summary:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+        border-radius: 4px;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--display);
+        line-height: 1.12;
+        text-wrap: balance;
+        margin: 0;
+      }
+      h2 {
+        font-size: clamp(28px, 4.2vw, 38px);
+        font-weight: 800;
+        letter-spacing: -0.01em;
+      }
+      h3 {
+        font-size: 19px;
+        font-weight: 700;
+        margin-top: 28px;
+        margin-bottom: 6px;
+      }
+      p {
+        margin: 0 0 12px;
+      }
+      ul,
+      ol {
+        margin: 0 0 12px;
+        padding-left: 22px;
+      }
+      li {
+        margin-bottom: 6px;
+      }
+      li::marker {
+        color: var(--muted);
+      }
+      code,
+      .mono {
+        font-family: var(--mono);
+        font-size: 0.84em;
+      }
+      code {
+        background: var(--sunk);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
+      b,
+      strong {
+        font-weight: 600;
+      }
+
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 56px;
+      }
+      @media (max-width: 960px) {
+        .wrap {
+          grid-template-columns: minmax(0, 1fr);
+        }
+        .rail {
+          display: none;
+        }
+      }
+
+      /* hero */
+      .hero {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding-block: 48px 28px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+        gap: 40px;
+        align-items: end;
+      }
+      @media (max-width: 860px) {
+        .hero {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 20px;
+        }
+      }
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 14px;
+      }
+      h1 {
+        font-size: clamp(44px, 7.4vw, 84px);
+        font-weight: 800;
+        letter-spacing: -0.025em;
+        line-height: 0.95;
+      }
+      h1 .big {
+        color: var(--accent);
+      }
+      .hero .intro {
+        font-size: 18px;
+        margin-top: 18px;
+        max-width: 34em;
+        color: var(--ink);
+      }
+      .stairs {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .stairs text {
+        font-family: var(--mono);
+      }
+      .stairs .st {
+        fill: var(--sunk);
+        stroke: var(--rule);
+      }
+      .stairs a:hover .st,
+      .stairs a:focus .st {
+        fill: var(--accent-soft);
+        stroke: var(--accent);
+      }
+      .stairs .sn {
+        font-size: 13px;
+        font-weight: 600;
+        fill: var(--ink);
+      }
+      .stairs .sl {
+        font-size: 11.5px;
+        fill: var(--muted);
+      }
+      .stairs .star {
+        font-size: 13px;
+        fill: var(--warn);
+      }
+      .stairs .cap {
+        font-size: 11px;
+        fill: var(--muted);
+      }
+
+      .legend {
+        max-width: 1120px;
+        margin: 0 auto 36px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 18px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        align-items: center;
+        border-top: 1px solid var(--rule);
+        padding-top: 16px;
+      }
+      .legend i {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        border: 1.5px solid;
+        vertical-align: -2px;
+        margin-right: 6px;
+      }
+
+      /* rail */
+      .rail {
+        position: sticky;
+        top: env(safe-area-inset-top, 0px);
+        align-self: start;
+        padding-top: 8px;
+        max-height: 100vh;
+        overflow: auto;
+      }
+      .rail ol {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-family: var(--display);
+        font-size: 15px;
+      }
+      .rail li {
+        margin: 0;
+      }
+      .rail a {
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        gap: 6px;
+        padding: 7px 8px;
+        border-radius: 8px;
+        color: var(--muted);
+        text-decoration: none;
+        line-height: 1.3;
+      }
+      .rail a span {
+        font-family: var(--mono);
+        font-size: 12px;
+        padding-top: 2px;
+      }
+      .rail a:hover {
+        background: var(--sunk);
+        color: var(--ink);
+      }
+      .rail a.on {
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: 0 0 0 1px var(--rule);
+      }
+      .rail .head {
+        font-family: var(--mono);
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 10px 8px;
+      }
+
+      main {
+        min-width: 0;
+      }
+      .step {
+        padding-block: 40px;
+        border-top: 1px solid var(--rule);
+      }
+      .step:first-child {
+        border-top: 0;
+        padding-top: 4px;
+      }
+      .step > * {
+        max-width: 720px;
+      }
+      .step > figure {
+        max-width: 760px;
+      }
+      .snum {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 8px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .flag {
+        color: var(--warn);
+        background: var(--warn-soft);
+        padding: 2px 8px;
+        border-radius: 99px;
+        letter-spacing: 0.02em;
+        text-transform: none;
+      }
+      .lede {
+        font-size: 19px;
+        margin-top: 12px;
+        color: var(--ink);
+      }
+
+      .eli5 {
+        background: var(--accent-soft);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin: 22px 0;
+      }
+      .eli5 p:last-child {
+        margin-bottom: 0;
+      }
+      .tag {
+        display: block;
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      .beyond {
+        border: 1px solid var(--rule);
+        background: var(--surface);
+        border-radius: 14px;
+        padding: 18px 20px;
+        margin: 24px 0 8px;
+      }
+      .beyond .tag {
+        color: var(--muted);
+      }
+      .beyond ul:last-child,
+      .beyond p:last-child {
+        margin-bottom: 0;
+      }
+      .handoff {
+        margin-top: 22px;
+        font-family: var(--display);
+        font-size: 16px;
+        color: var(--muted);
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+      }
+      .handoff b {
+        color: var(--warn);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      figure {
+        margin: 22px 0;
+        background: var(--surface);
+        border-radius: 14px;
+        padding: 16px 12px 10px;
+        box-shadow: 0 0 0 1px var(--rule);
+      }
+      figcaption {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        padding: 8px 8px 2px;
+        line-height: 1.5;
+      }
+      .dg {
+        overflow-x: auto;
+      }
+      .dg svg {
+        display: block;
+        width: 100%;
+        min-width: 540px;
+        max-width: 680px;
+        margin: 0 auto;
+        height: auto;
+      }
+      svg .n {
+        stroke-width: 1.6;
+      }
+      svg .t-client {
+        fill: var(--c-client-f);
+        stroke: var(--c-client-s);
+      }
+      svg .t-lb {
+        fill: var(--c-lb-f);
+        stroke: var(--c-lb-s);
+      }
+      svg .t-app {
+        fill: var(--c-app-f);
+        stroke: var(--c-app-s);
+      }
+      svg .t-db {
+        fill: var(--c-db-f);
+        stroke: var(--c-db-s);
+      }
+      svg .t-cache {
+        fill: var(--c-cache-f);
+        stroke: var(--c-cache-s);
+      }
+      svg .t-cdn {
+        fill: var(--c-cdn-f);
+        stroke: var(--c-cdn-s);
+      }
+      svg .t-mq {
+        fill: var(--c-mq-f);
+        stroke: var(--c-mq-s);
+      }
+      svg .slot {
+        fill: var(--surface);
+        stroke: var(--c-mq-s);
+        stroke-width: 1.2;
+      }
+      svg .zone {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 1.3;
+        stroke-dasharray: 5 5;
+      }
+      svg .zl {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.06em;
+        fill: var(--muted);
+      }
+      svg .nl {
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 13.5px;
+        fill: var(--ink);
+      }
+      svg .ns {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--muted);
+      }
+      svg .nt {
+        font-family: var(--mono);
+        font-size: 11px;
+        fill: var(--muted);
+      }
+      svg .ed {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 1.6;
+      }
+      svg .ed.dash {
+        stroke-dasharray: 5 4;
+      }
+      svg .ah {
+        fill: var(--line);
+      }
+      svg .el {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--ink);
+        paint-order: stroke;
+        stroke: var(--surface);
+        stroke-width: 5px;
+        stroke-linejoin: round;
+      }
+
+      /* latency bars */
+      .lat {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 8px 12px;
+        align-items: center;
+        font-family: var(--mono);
+        font-size: 13px;
+        padding: 6px 8px 4px;
+      }
+      .lat .bar {
+        height: 14px;
+        border-radius: 4px;
+        background: var(--c-cdn-s);
+        opacity: 0.85;
+      }
+      .lat .v {
+        font-variant-numeric: tabular-nums;
+        color: var(--muted);
+      }
+
+      /* sharding tables */
+      .shard {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 14px;
+        justify-content: center;
+        padding: 8px 4px;
+      }
+      .tbl {
+        display: grid;
+        border: 1.5px solid var(--c-db-s);
+        border-radius: 8px;
+        overflow: hidden;
+        background: var(--c-db-f);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+      .tbl div {
+        padding: 3px 8px;
+        border-top: 1px solid var(--rule);
+        white-space: nowrap;
+      }
+      .tbl div.h {
+        border-top: 0;
+        font-weight: 600;
+        background: var(--surface);
+        color: var(--ink);
+      }
+      .tbl .dim {
+        color: var(--muted);
+      }
+      .arrow {
+        font-family: var(--display);
+        font-size: 26px;
+        color: var(--line);
+      }
+      .tname {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+        text-align: center;
+        margin-bottom: 4px;
+      }
+
+      /* exchange cards */
+      .xgrid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin: 18px 0;
+      }
+      @media (max-width: 620px) {
+        .xgrid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .x {
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      .x h4 {
+        font-family: var(--display);
+        font-size: 17px;
+        margin: 0 0 4px;
+      }
+      .x .rule {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--c-mq-s);
+        margin-bottom: 6px;
+      }
+      .x p {
+        font-size: 15.5px;
+        margin: 0;
+      }
+      .x .src {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        color: var(--muted);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin-top: 8px;
+      }
+
+      /* compare table */
+      .tw {
+        overflow-x: auto;
+        margin: 16px 0;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 15px;
+        min-width: 560px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 12px;
+        border-bottom: 1px solid var(--rule);
+        vertical-align: top;
+      }
+      th {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      td:first-child {
+        font-family: var(--display);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      /* quiz */
+      details {
+        border-top: 1px solid var(--rule);
+        padding: 12px 0;
+      }
+      details:last-of-type {
+        border-bottom: 1px solid var(--rule);
+      }
+      summary {
+        cursor: pointer;
+        font-family: var(--display);
+        font-weight: 700;
+        font-size: 17px;
+        list-style: none;
+        display: flex;
+        gap: 10px;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      summary::before {
+        content: "+";
+        font-family: var(--mono);
+        color: var(--accent);
+        width: 14px;
+        flex: none;
+      }
+      details[open] summary::before {
+        content: "–";
+      }
+      details p {
+        margin: 8px 0 0 24px;
+      }
+
+      .sources {
+        font-size: 15px;
+      }
+      .sources li {
+        margin-bottom: 4px;
+      }
+      .foot {
+        max-width: 720px;
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 28px;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        .rail a {
+          transition: background 0.15s;
+        }
+      }
+
+      /* ── additions shared by lectures 1–4 ── */
+      svg .n.down {
+        opacity: 0.5;
+        stroke-dasharray: 4 3;
+      }
+      svg .downx {
+        font-family: var(--mono);
+        font-size: 9.5px;
+        font-weight: 600;
+        fill: var(--warn);
+        letter-spacing: 0.06em;
+      }
+      svg .ed.bad {
+        stroke: var(--warn);
+      }
+      svg .ed.good {
+        stroke: var(--accent);
+      }
+      svg .ahb {
+        fill: var(--warn);
+      }
+      svg .el.bad,
+      svg .nt.bad {
+        fill: var(--warn);
+      }
+      svg .nt.strong {
+        fill: var(--ink);
+        font-weight: 600;
+      }
+      svg .cutx {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: 18px;
+        fill: var(--warn);
+        paint-order: stroke;
+        stroke: var(--surface);
+        stroke-width: 5px;
+      }
+      svg .zone.bad {
+        stroke: var(--warn);
+      }
+      svg .zl.bad {
+        fill: var(--warn);
+      }
+      svg .life {
+        stroke: var(--line);
+        stroke-width: 1.4;
+      }
+      svg .ringc {
+        fill: none;
+        stroke: var(--line);
+        stroke-width: 10;
+        stroke-opacity: 0.28;
+      }
+      svg .tick {
+        stroke: var(--line);
+        stroke-width: 1.2;
+      }
+      svg .ringn {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        fill: var(--muted);
+      }
+      svg circle.n {
+        stroke-width: 1.6;
+      }
+
+      /* worked calculations */
+      .calc {
+        font-family: var(--mono);
+        font-size: 13.5px;
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin: 16px 0;
+        overflow-x: auto;
+        line-height: 1.75;
+        font-variant-numeric: tabular-nums;
+      }
+      .calc .c {
+        color: var(--muted);
+      }
+      .calc b {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .tiles {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin: 18px 0;
+      }
+      @media (max-width: 720px) {
+        .tiles {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      .tile {
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px;
+      }
+      .tile b {
+        display: block;
+        font-family: var(--display);
+        font-size: 26px;
+        font-weight: 800;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+      .tile span {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+      }
+
+      /* bit layout */
+      .bits {
+        display: flex;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1.5px solid var(--c-lb-s);
+        font-family: var(--mono);
+        font-size: 12px;
+        min-width: 520px;
+      }
+      .bits div {
+        padding: 10px 8px;
+        text-align: center;
+        border-left: 1px solid var(--c-lb-s);
+        background: var(--c-lb-f);
+      }
+      .bits div:first-child {
+        border-left: 0;
+        background: var(--sunk);
+      }
+      .bits b {
+        display: block;
+        font-family: var(--display);
+        font-size: 14px;
+      }
+      .code {
+        font-family: var(--mono);
+        font-size: 13px;
+        background: var(--sunk);
+        border-radius: 10px;
+        padding: 12px 14px;
+        overflow-x: auto;
+        white-space: pre;
+        line-height: 1.6;
+      }
+
+      pre.code {
+        margin: 0 0 12px;
+      }
+
+      .side {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .side .cap {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      /* OSI-style stack */
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        max-width: 460px;
+      }
+      .stack a,
+      .stack div {
+        display: grid;
+        grid-template-columns: 34px 1fr auto;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 14px;
+        border-radius: 10px;
+        background: var(--sunk);
+        color: var(--muted);
+        text-decoration: none;
+        font-family: var(--display);
+        font-size: 15px;
+      }
+      .stack .no {
+        font-family: var(--mono);
+        font-size: 12px;
+      }
+      .stack .ex {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .stack .hot {
+        background: var(--accent-soft);
+        color: var(--ink);
+        box-shadow: inset 0 0 0 1.5px var(--accent);
+        font-weight: 700;
+      }
+      .stack .hot .ex {
+        color: var(--accent);
+      }
+
+      /* pattern cards in hero */
+      .pgrid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      @media (max-width: 520px) {
+        .pgrid {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .pgrid a {
+        display: block;
+        background: var(--surface);
+        border: 1px solid var(--rule);
+        border-radius: 12px;
+        padding: 14px;
+        text-decoration: none;
+        color: var(--ink);
+      }
+      .pgrid a:hover {
+        border-color: var(--accent);
+      }
+      .pgrid b {
+        display: block;
+        font-family: var(--display);
+        font-size: 20px;
+        font-weight: 800;
+      }
+      .pgrid span {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        display: block;
+        margin-top: 4px;
+        line-height: 1.45;
+      }
+      .pgrid .star {
+        color: var(--warn);
+      }
+
+      /* verdict pills in tables */
+      .pill {
+        display: inline-block;
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 99px;
+        white-space: nowrap;
+      }
+      .pill.yes {
+        background: var(--accent-soft);
+        color: var(--accent);
+      }
+      .pill.no {
+        background: var(--warn-soft);
+        color: var(--warn);
+      }
+      td .mono {
+        font-size: 13px;
+      }
+
+      .two {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin: 18px 0;
+      }
+      @media (max-width: 620px) {
+        .two {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+      .two .x ul {
+        margin: 6px 0 0;
+        padding-left: 18px;
+        font-size: 15.5px;
+      }
+      .two .x li {
+        margin-bottom: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div>
+        <div class="eyebrow">
+          LLD lecture 3 · creational patterns · study notes
+        </div>
+        <h1><span class="big">Factory</span> &amp; Abstract Factory</h1>
+        <p class="intro">
+          Two patterns about <b>who creates objects</b>. Instead of every class
+          deciding "if this, make a Circle; if that, make a Square", one factory
+          owns that decision. Abstract factory adds a second layer: first pick
+          the right factory, then let it pick the object.
+        </p>
+      </div>
+      <div class="side">
+        <span class="cap">Ask the factory, get the object</span>
+        <div class="dg" data-d="hero"></div>
+      </div>
+    </header>
+
+    <div class="legend" aria-label="Diagram colour key">
+      <span>Colour key:</span>
+      <span
+        ><i style="background: var(--c-lb-f); border-color: var(--c-lb-s)"></i
+        >Interface</span
+      >
+      <span
+        ><i
+          style="background: var(--c-cache-f); border-color: var(--c-cache-s)"
+        ></i
+        >Factory</span
+      >
+      <span
+        ><i style="background: var(--c-app-f); border-color: var(--c-app-s)"></i
+        >Product (the object created)</span
+      >
+      <span
+        ><i
+          style="background: var(--c-client-f); border-color: var(--c-client-s)"
+        ></i
+        >Caller</span
+      >
+    </div>
+
+    <div class="wrap">
+      <nav class="rail" aria-label="Sections">
+        <p class="head">In this lecture</p>
+        <ol id="rail">
+          <li>
+            <a href="#s0"><span>00</span>When to use a factory</a>
+          </li>
+          <li>
+            <a href="#s1"><span>01</span>Factory pattern</a>
+          </li>
+          <li>
+            <a href="#s2"><span>02</span>Factory in code</a>
+          </li>
+          <li>
+            <a href="#s3"><span>03</span>Abstract factory</a>
+          </li>
+          <li>
+            <a href="#s4"><span>04</span>Abstract factory in code</a>
+          </li>
+          <li>
+            <a href="#s5"><span>→</span>Side by side</a>
+          </li>
+          <li>
+            <a href="#extra"><span>+</span>Good to know</a>
+          </li>
+          <li>
+            <a href="#revise"><span>?</span>Revision</a>
+          </li>
+        </ol>
+      </nav>
+
+      <main>
+        <section class="step" id="s0">
+          <div class="snum">00 · The problem</div>
+          <h2>Creating objects "if this, then that"</h2>
+          <p class="lede">
+            Use a factory when you create an object <b>based on a condition</b>:
+            condition 1 → object 1, condition 2 → object 2.
+          </p>
+          <div class="eli5">
+            <span class="tag">Like you're five</span>
+            <p>
+              You don't build your own toy car. You tell the toy shop "a red
+              car, please" and it hands you one. The shop knows how to make each
+              toy; you only say which one you want.
+            </p>
+          </div>
+          <figure>
+            <div class="dg" data-d="why"></div>
+            <figcaption>
+              If 50 places need a shape, the same if/else creation logic gets
+              copied 50 times. A factory keeps it in one place.
+            </figcaption>
+          </figure>
+          <p>
+            Without a factory, every class that needs a shape repeats the same
+            conditions. Add a new shape and you edit all of them. The factory
+            <b>avoids that duplication</b> and is the single source of truth for
+            "which object do I build?"
+          </p>
+          <p>
+            Both patterns are <b>creational</b> design patterns: they're about
+            how objects get created.
+          </p>
+        </section>
+
+        <section class="step" id="s1">
+          <div class="snum">01 · Factory pattern</div>
+          <h2>One class decides which object to build</h2>
+          <figure>
+            <div class="dg" data-d="shape"></div>
+            <figcaption>
+              main() has a ShapeFactory. The factory returns a Shape: the
+              interface that Circle, Square and Rectangle implement. Callers
+              only ever see "Shape".
+            </figcaption>
+          </figure>
+          <ul>
+            <li>
+              <b>Product interface:</b> <span class="mono">Shape</span>, with
+              one method <span class="mono">draw()</span>.
+            </li>
+            <li>
+              <b>Concrete products:</b> <span class="mono">Circle</span>,
+              <span class="mono">Square</span>,
+              <span class="mono">Rectangle</span>, each implementing
+              <span class="mono">draw()</span>.
+            </li>
+            <li>
+              <b>Factory:</b>
+              <span class="mono">ShapeFactory.getShape(input)</span> looks at
+              the input and returns the matching object.
+            </li>
+          </ul>
+        </section>
+
+        <section class="step" id="s2">
+          <div class="snum">02 · Factory in code</div>
+          <h2>ShapeFactory, as shown in the lecture</h2>
+          <pre class="code">
+public interface Shape {
+    void draw();
+}
+
+public class Circle implements Shape {
+    @Override
+    public void draw() { System.out.println("circle"); }
+}
+
+public class Rectangle implements Shape {
+    @Override
+    public void draw() { System.out.println("rectangle"); }
+}
+// Square is the same shape of class</pre
+          >
+          <pre class="code">
+public class ShapeFactory {
+
+    Shape getShape(String input) {
+        switch (input) {
+            case "CIRCLE":
+                return new Circle();
+            case "RECTANGLE":
+                return new Rectangle();
+            default:
+                return null;
+        }
+    }
+}</pre
+          >
+          <pre class="code">
+public class MainClass {
+    public static void main(String args[]) {
+        ShapeFactory shapeFactoryObj = new ShapeFactory();
+        Shape shapeObj = shapeFactoryObj.getShape("CIRCLE");
+        shapeObj.draw();
+    }
+}
+// output: circle</pre
+          >
+          <p>
+            The caller never writes <span class="mono">new Circle()</span>. It
+            asks the factory, and gets back a <span class="mono">Shape</span>.
+          </p>
+        </section>
+
+        <section class="step" id="s3">
+          <div class="snum">03 · Abstract factory pattern</div>
+          <h2>A factory of factories</h2>
+          <p class="lede">
+            When products fall into <b>groups</b>, give each group its own
+            factory, then add one more factory on top that picks the right
+            group.
+          </p>
+          <p>
+            The lecture's example: four cars implementing a
+            <span class="mono">Vehicle</span> interface with an
+            <span class="mono">average()</span> method (fuel average).
+          </p>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th>Group</th>
+                  <th>Class</th>
+                  <th>Example</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Luxury</td>
+                  <td><span class="mono">LuxuryVehicle1</span></td>
+                  <td>Mercedes</td>
+                </tr>
+                <tr>
+                  <td>Luxury</td>
+                  <td><span class="mono">LuxuryVehicle2</span></td>
+                  <td>BMW</td>
+                </tr>
+                <tr>
+                  <td>Ordinary</td>
+                  <td><span class="mono">OrdinaryVehicle1</span></td>
+                  <td>Swift</td>
+                </tr>
+                <tr>
+                  <td>Ordinary</td>
+                  <td><span class="mono">OrdinaryVehicle2</span></td>
+                  <td>Hyundai</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <figure>
+            <div class="dg" data-d="abs"></div>
+            <figcaption>
+              Layer 1: the factory of factories returns a VehicleFactory (luxury
+              or ordinary). Layer 2: that factory returns the actual car.
+            </figcaption>
+          </figure>
+          <p>
+            You <i>could</i> put all four cars into one big factory. But when
+            products can be logically grouped, each group gets its own factory
+            with the same kind of switch logic, and a top-level factory chooses
+            between them.
+          </p>
+        </section>
+
+        <section class="step" id="s4">
+          <div class="snum">04 · Abstract factory in code</div>
+          <h2>Two layers of the same idea</h2>
+          <p>
+            The lecture draws this one on the whiteboard. Here it is as Java,
+            using the whiteboard's names.
+          </p>
+          <pre class="code">
+public interface Vehicle { int average(); }
+
+public class LuxuryVehicle1 implements Vehicle {   // Mercedes
+    public int average() { return 10; }
+}
+// LuxuryVehicle2 (BMW), OrdinaryVehicle1 (Swift),
+// OrdinaryVehicle2 (Hyundai) look the same</pre
+          >
+          <pre class="code">
+public interface VehicleFactory {
+    Vehicle getVehicle(String type);
+}
+
+public class LuxuryFactory implements VehicleFactory {
+    public Vehicle getVehicle(String type) {
+        switch (type) {
+            case "MERCEDES": return new LuxuryVehicle1();
+            case "BMW":      return new LuxuryVehicle2();
+            default:         return null;
+        }
+    }
+}
+
+public class OrdinaryFactory implements VehicleFactory {
+    public Vehicle getVehicle(String type) {
+        switch (type) {
+            case "SWIFT":   return new OrdinaryVehicle1();
+            case "HYUNDAI": return new OrdinaryVehicle2();
+            default:        return null;
+        }
+    }
+}</pre
+          >
+          <pre class="code">
+// layer 1: the factory of factories
+public class VehicleFactoryProducer {
+    VehicleFactory getVehicleFactory(String group) {
+        switch (group) {
+            case "LUXURY":   return new LuxuryFactory();
+            case "ORDINARY": return new OrdinaryFactory();
+            default:         return null;
+        }
+    }
+}
+
+VehicleFactory f = new VehicleFactoryProducer()
+        .getVehicleFactory("LUXURY");
+Vehicle car = f.getVehicle("BMW");      // LuxuryVehicle2</pre
+          >
+        </section>
+
+        <section class="step" id="s5">
+          <div class="snum">Side by side</div>
+          <h2>One layer vs two</h2>
+          <figure>
+            <div class="dg" data-d="layers"></div>
+            <figcaption>
+              Same switch logic, applied once (factory) or twice (abstract
+              factory: pick the family, then the product).
+            </figcaption>
+          </figure>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Factory</th>
+                  <th>Abstract factory</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Layers</td>
+                  <td>1: factory → product</td>
+                  <td>2: factory → factory → product</td>
+                </tr>
+                <tr>
+                  <td>Use when</td>
+                  <td>Object depends on a condition</td>
+                  <td>Products also fall into groups</td>
+                </tr>
+                <tr>
+                  <td>Lecture example</td>
+                  <td>ShapeFactory → Circle</td>
+                  <td>Producer → LuxuryFactory → BMW</td>
+                </tr>
+                <tr>
+                  <td>Main benefit</td>
+                  <td colspan="2">
+                    Creation logic lives in one place; callers depend on
+                    interfaces, not concrete classes
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            The lecture stresses these are among the most common patterns in
+            real codebases: expect to see factories in almost any company's
+            code.
+          </p>
+        </section>
+
+        <section class="step" id="extra">
+          <div class="snum">
+            Beyond the course
+            <span class="flag">good to know as an engineer</span>
+          </div>
+          <h2>Good to know as an engineer</h2>
+
+          <h3>There are really three "factories"</h3>
+          <div class="tw">
+            <table>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Simple factory</th>
+                  <th>Factory Method (GoF)</th>
+                  <th>Abstract Factory (GoF)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>What it is</td>
+                  <td>One class with a switch</td>
+                  <td>Subclasses override a create method</td>
+                  <td>
+                    One object creates a <b>family</b> of related products
+                  </td>
+                </tr>
+                <tr>
+                  <td>Mechanism</td>
+                  <td>Conditional</td>
+                  <td>Inheritance</td>
+                  <td>Composition: you pass a factory object around</td>
+                </tr>
+                <tr>
+                  <td>This lecture</td>
+                  <td>ShapeFactory</td>
+                  <td>Not shown</td>
+                  <td>Shown loosely</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            The lecture's "factory pattern" is the <b>simple factory</b> idiom.
+            It isn't one of the 23 Gang of Four patterns, but it's the one
+            you'll see most. GoF <b>Factory Method</b> looks like this:
+          </p>
+          <pre class="code">
+abstract class Dialog {
+    abstract Button createButton();    // the factory method
+    void render() { createButton().paint(); }
+}
+class WindowsDialog extends Dialog {
+    Button createButton() { return new WindowsButton(); }
+}</pre
+          >
+
+          <h3>The textbook abstract factory is about families</h3>
+          <p>
+            "Factory of factories" is a popular way to explain it, but the GoF
+            definition is a factory that creates
+            <b>several related products that must match</b>. The classic example
+            is a UI toolkit:
+          </p>
+          <pre class="code">
+interface GUIFactory {
+    Button   createButton();
+    Checkbox createCheckbox();
+}
+class MacFactory implements GUIFactory { … } // Mac button, checkbox
+class WinFactory implements GUIFactory { … } // Windows ones</pre
+          >
+          <p>
+            Hand the app one <span class="mono">GUIFactory</span> and every
+            widget it builds is guaranteed to come from the same family. You
+            never get a Mac button next to a Windows checkbox. In the lecture's
+            terms, a true luxury factory would make the matching car
+            <i>and</i> interior <i>and</i> tyres.
+          </p>
+
+          <h3>Making the lecture's code production-ready</h3>
+          <ul>
+            <li>
+              <b>Don't return null</b> for unknown input. Throw
+              <span class="mono">IllegalArgumentException</span> instead,
+              otherwise the caller crashes later with a NullPointerException
+              (the same trap as lecture 2).
+            </li>
+            <li>
+              Use an <b>enum</b> (<span class="mono">ShapeType.CIRCLE</span>)
+              instead of strings, so typos become compile errors.
+            </li>
+            <li>
+              Adding a shape means editing the switch, which bends open/closed.
+              For large or plugin-style sets, use a registry such as
+              <span class="mono"
+                >Map&lt;ShapeType, Supplier&lt;Shape&gt;&gt;</span
+              >.
+            </li>
+            <li>
+              Factories often return <b>shared or cached</b> instances instead
+              of always calling <span class="mono">new</span>. Callers don't
+              need to know which.
+            </li>
+          </ul>
+
+          <h3>Where you've already used factories</h3>
+          <ul>
+            <li>
+              <span class="mono">Calendar.getInstance()</span> returns a
+              Gregorian, Buddhist or Japanese calendar depending on locale.
+            </li>
+            <li>
+              <span class="mono">NumberFormat.getInstance()</span>,
+              <span class="mono">Charset.forName("UTF-8")</span> and
+              <span class="mono">List.of(…)</span> are all factory methods.
+            </li>
+            <li>
+              <span class="mono">DocumentBuilderFactory.newInstance()</span>
+              picks an XML parser implementation at run time. It's often called
+              an abstract factory, though it only makes one kind of product.
+            </li>
+            <li>
+              Spring's <span class="mono">BeanFactory</span> and
+              <span class="mono">ApplicationContext</span> are, at heart, very
+              large factories.
+            </li>
+          </ul>
+        </section>
+
+        <section class="step" id="revise">
+          <div class="snum">Check yourself</div>
+          <h2>Revision questions</h2>
+          <p class="lede">Try answering out loud before opening each one.</p>
+          <details>
+            <summary>When does the lecture say to use a factory?</summary>
+            <p>
+              When you create objects based on a condition (condition 1 → object
+              1, condition 2 → object 2), especially when that logic would
+              otherwise be repeated in many places.
+            </p>
+          </details>
+          <details>
+            <summary>
+              What does ShapeFactory.getShape("CIRCLE") return, and what type
+              does the caller see?
+            </summary>
+            <p>A new Circle object, typed as the Shape interface.</p>
+          </details>
+          <details>
+            <summary>What problem does the factory solve?</summary>
+            <p>
+              Duplicated creation logic. The conditions live in one place (the
+              single source of truth) instead of being copied wherever an object
+              is needed.
+            </p>
+          </details>
+          <details>
+            <summary>
+              Describe the two layers of the abstract factory example.
+            </summary>
+            <p>
+              Layer 1 (factory of factories) returns a LuxuryFactory or
+              OrdinaryFactory. Layer 2: that factory returns the concrete car
+              (Mercedes/BMW or Swift/Hyundai).
+            </p>
+          </details>
+          <details>
+            <summary>Simple factory vs GoF Factory Method?</summary>
+            <p>
+              A simple factory is one class with a switch. Factory Method uses
+              inheritance: a base class declares a create method, and subclasses
+              decide which product to instantiate.
+            </p>
+          </details>
+          <details>
+            <summary>What's the GoF definition of Abstract Factory?</summary>
+            <p>
+              An interface for creating families of related or dependent objects
+              without naming their concrete classes, for example a GUIFactory
+              that makes matching buttons and checkboxes.
+            </p>
+          </details>
+          <details>
+            <summary>Why is returning null from a factory a bad idea?</summary>
+            <p>
+              The caller may not check, and it crashes later with a
+              NullPointerException far from the cause. Throw an exception for
+              unknown input instead.
+            </p>
+          </details>
+
+          <h3>Sources used to expand these notes</h3>
+          <ul class="sources">
+            <li>
+              <a
+                href="https://refactoring.guru/design-patterns/factory-comparison"
+                target="_blank"
+                rel="noopener"
+                >Refactoring.Guru: Factory comparison</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.baeldung.com/java-factory-pattern"
+                target="_blank"
+                rel="noopener"
+                >Baeldung: Factory Method in Java</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://www.baeldung.com/java-abstract-factory-pattern"
+                target="_blank"
+                rel="noopener"
+                >Baeldung: Abstract Factory in Java</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://horstmann.com/unblog/2023-01-22/index.html"
+                target="_blank"
+                rel="noopener"
+                >Cay Horstmann: Do abstract factories occur in the wild?</a
+              >
+            </li>
+            <li>
+              <a
+                href="https://dzone.com/articles/factory-method-vs-abstract"
+                target="_blank"
+                rel="noopener"
+                >DZone: Factory Method vs Abstract Factory</a
+              >
+            </li>
+          </ul>
+          <p class="foot">
+            Built from the lecture's audio transcript, whiteboard and on-screen
+            code (12 min). The abstract factory code is written from the
+            whiteboard diagram. Sections marked "Good to know" come from outside
+            the video.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      window.DIAGRAMS = {
+        hero: {
+          h: 220,
+          alt: "The client asks the shape factory for a CIRCLE; the factory decides which class to create and hands back a Circle object",
+          n: [
+            {
+              t: "client",
+              x: 10,
+              y: 82,
+              w: 150,
+              h: 56,
+              l: "You",
+              s: '"I need a CIRCLE"',
+            },
+            {
+              t: "cache",
+              x: 230,
+              y: 66,
+              w: 170,
+              h: 88,
+              l: "ShapeFactory",
+              s: "decides what to build",
+            },
+            { t: "app", x: 480, y: 14, w: 150, h: 46, l: "Circle ✓" },
+            {
+              t: "app",
+              x: 480,
+              y: 87,
+              w: 150,
+              h: 46,
+              l: "Square",
+              c: "client",
+            },
+            {
+              t: "app",
+              x: 480,
+              y: 160,
+              w: 150,
+              h: 46,
+              l: "Rectangle",
+              c: "client",
+            },
+          ],
+          e: [
+            {
+              p: [
+                [160, 110],
+                [230, 110],
+              ],
+            },
+            {
+              p: [
+                [400, 92],
+                [480, 37],
+              ],
+              good: 1,
+            },
+            {
+              p: [
+                [400, 110],
+                [480, 110],
+              ],
+              dash: 1,
+            },
+            {
+              p: [
+                [400, 128],
+                [480, 183],
+              ],
+              dash: 1,
+            },
+          ],
+        },
+
+        why: {
+          h: 260,
+          alt: "Before: the same if-else creation logic is copied into every class that needs a shape. After: every class calls one ShapeFactory, which holds the logic once",
+          n: [
+            {
+              t: "zone",
+              x: 6,
+              y: 8,
+              w: 300,
+              h: 244,
+              l: "WITHOUT · LOGIC COPIED",
+              bad: 1,
+            },
+            {
+              t: "client",
+              x: 22,
+              y: 40,
+              w: 268,
+              h: 52,
+              l: "Class 1",
+              s: "if CIRCLE → new Circle() …",
+            },
+            {
+              t: "client",
+              x: 22,
+              y: 110,
+              w: 268,
+              h: 52,
+              l: "Class 2",
+              s: "if CIRCLE → new Circle() …",
+            },
+            {
+              t: "client",
+              x: 22,
+              y: 180,
+              w: 268,
+              h: 52,
+              l: "Class 50",
+              s: "if CIRCLE → new Circle() …",
+            },
+            { t: "zone", x: 334, y: 8, w: 300, h: 244, l: "WITH · ONE PLACE" },
+            { t: "client", x: 350, y: 40, w: 110, h: 44, l: "Class 1" },
+            { t: "client", x: 350, y: 108, w: 110, h: 44, l: "Class 2" },
+            { t: "client", x: 350, y: 176, w: 110, h: 44, l: "Class 50" },
+            {
+              t: "cache",
+              x: 500,
+              y: 90,
+              w: 120,
+              h: 80,
+              l: "ShapeFactory",
+              s: "the if/switch",
+            },
+          ],
+          e: [
+            {
+              p: [
+                [460, 62],
+                [500, 112],
+              ],
+              good: 1,
+            },
+            {
+              p: [
+                [460, 130],
+                [500, 130],
+              ],
+              good: 1,
+            },
+            {
+              p: [
+                [460, 198],
+                [500, 148],
+              ],
+              good: 1,
+            },
+          ],
+        },
+
+        shape: {
+          h: 300,
+          alt: "Factory pattern structure: main has a ShapeFactory; ShapeFactory has a Shape interface with draw; Circle, Square and Rectangle implement Shape",
+          n: [
+            { t: "client", x: 10, y: 30, w: 110, h: 56, l: "main()" },
+            {
+              t: "cache",
+              x: 180,
+              y: 22,
+              w: 180,
+              h: 72,
+              l: "ShapeFactory",
+              s: "getShape(input)",
+            },
+            {
+              t: "lb",
+              x: 430,
+              y: 30,
+              w: 200,
+              h: 56,
+              l: "«interface» Shape",
+              s: "void draw()",
+            },
+            {
+              t: "app",
+              x: 250,
+              y: 210,
+              w: 120,
+              h: 56,
+              l: "Circle",
+              s: "draw()",
+            },
+            {
+              t: "app",
+              x: 390,
+              y: 210,
+              w: 120,
+              h: 56,
+              l: "Square",
+              s: "draw()",
+            },
+            {
+              t: "app",
+              x: 530,
+              y: 210,
+              w: 100,
+              h: 56,
+              l: "Rectangle",
+              s: "draw()",
+            },
+          ],
+          e: [
+            {
+              p: [
+                [120, 58],
+                [180, 58],
+              ],
+              l: "has-a",
+              at: [150, 50],
+            },
+            {
+              p: [
+                [360, 58],
+                [430, 58],
+              ],
+              l: "has-a",
+              at: [395, 50],
+            },
+            {
+              p: [
+                [310, 210],
+                [310, 150],
+                [490, 150],
+                [490, 86],
+              ],
+            },
+            {
+              p: [
+                [450, 210],
+                [450, 150],
+              ],
+              noarrow: 1,
+            },
+            {
+              p: [
+                [580, 210],
+                [580, 150],
+                [490, 150],
+              ],
+              noarrow: 1,
+            },
+          ],
+          notes: [{ x: 540, y: 142, l: "is-a", a: "start" }],
+        },
+
+        abs: {
+          h: 380,
+          alt: "Abstract factory structure: a factory of factories returns a VehicleFactory. LuxuryFactory and OrdinaryFactory implement VehicleFactory. LuxuryFactory creates Mercedes and BMW; OrdinaryFactory creates Swift and Hyundai",
+          n: [
+            {
+              t: "cache",
+              x: 200,
+              y: 10,
+              w: 240,
+              h: 56,
+              l: "Factory of factories",
+              s: "getVehicleFactory(type)",
+            },
+            {
+              t: "lb",
+              x: 200,
+              y: 110,
+              w: 240,
+              h: 56,
+              l: "«interface» VehicleFactory",
+              s: "getVehicle(type)",
+            },
+            {
+              t: "cache",
+              x: 40,
+              y: 210,
+              w: 240,
+              h: 56,
+              l: "LuxuryFactory",
+              s: "luxury group",
+            },
+            {
+              t: "cache",
+              x: 360,
+              y: 210,
+              w: 240,
+              h: 56,
+              l: "OrdinaryFactory",
+              s: "ordinary group",
+            },
+            {
+              t: "app",
+              x: 6,
+              y: 310,
+              w: 140,
+              h: 56,
+              l: "Mercedes",
+              s: "LuxuryVehicle1",
+            },
+            {
+              t: "app",
+              x: 166,
+              y: 310,
+              w: 140,
+              h: 56,
+              l: "BMW",
+              s: "LuxuryVehicle2",
+            },
+            {
+              t: "app",
+              x: 334,
+              y: 310,
+              w: 140,
+              h: 56,
+              l: "Swift",
+              s: "OrdinaryVehicle1",
+            },
+            {
+              t: "app",
+              x: 494,
+              y: 310,
+              w: 140,
+              h: 56,
+              l: "Hyundai",
+              s: "OrdinaryVehicle2",
+            },
+          ],
+          e: [
+            {
+              p: [
+                [320, 66],
+                [320, 110],
+              ],
+              good: 1,
+              l: "returns one",
+              at: [372, 92],
+            },
+            {
+              p: [
+                [160, 210],
+                [280, 166],
+              ],
+            },
+            {
+              p: [
+                [480, 210],
+                [360, 166],
+              ],
+            },
+            {
+              p: [
+                [110, 266],
+                [76, 310],
+              ],
+              good: 1,
+            },
+            {
+              p: [
+                [210, 266],
+                [236, 310],
+              ],
+              good: 1,
+            },
+            {
+              p: [
+                [430, 266],
+                [404, 310],
+              ],
+              good: 1,
+            },
+            {
+              p: [
+                [530, 266],
+                [564, 310],
+              ],
+              good: 1,
+            },
+          ],
+        },
+
+        layers: {
+          h: 270,
+          alt: "Factory: input CIRCLE goes to ShapeFactory, which returns a Circle (one layer). Abstract factory: the factory of factories picks the luxury family, LuxuryFactory picks BMW (two layers)",
+          n: [
+            { t: "zone", x: 6, y: 8, w: 300, h: 252, l: "FACTORY · 1 LAYER" },
+            { t: "client", x: 46, y: 36, w: 220, h: 46, l: 'input "CIRCLE"' },
+            {
+              t: "cache",
+              x: 46,
+              y: 114,
+              w: 220,
+              h: 46,
+              l: "ShapeFactory",
+              s: "picks a product",
+            },
+            { t: "app", x: 46, y: 192, w: 220, h: 46, l: "Circle" },
+            {
+              t: "zone",
+              x: 334,
+              y: 8,
+              w: 300,
+              h: 252,
+              l: "ABSTRACT FACTORY · 2 LAYERS",
+            },
+            {
+              t: "cache",
+              x: 374,
+              y: 36,
+              w: 220,
+              h: 46,
+              l: "Factory of factories",
+              s: '"LUXURY" → a family',
+            },
+            {
+              t: "cache",
+              x: 374,
+              y: 114,
+              w: 220,
+              h: 46,
+              l: "LuxuryFactory",
+              s: '"BMW" → a product',
+            },
+            { t: "app", x: 374, y: 192, w: 220, h: 46, l: "BMW" },
+          ],
+          e: [
+            {
+              p: [
+                [156, 82],
+                [156, 114],
+              ],
+            },
+            {
+              p: [
+                [156, 160],
+                [156, 192],
+              ],
+              good: 1,
+            },
+            {
+              p: [
+                [484, 82],
+                [484, 114],
+              ],
+            },
+            {
+              p: [
+                [484, 160],
+                [484, 192],
+              ],
+              good: 1,
+            },
+          ],
+        },
+      };
+    </script>
+    <script>
+      (function () {
+        var D = window.DIAGRAMS || {};
+        function esc(s) {
+          return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        }
+        function label(n, cx, ty) {
+          var o = "";
+          if (n.s) {
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (ty - 3) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+            o +=
+              '<text class="ns" x="' +
+              cx +
+              '" y="' +
+              (ty + 12) +
+              '" text-anchor="middle">' +
+              esc(n.s) +
+              "</text>";
+          } else if (n.l) {
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (ty + 5) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+          }
+          return o;
+        }
+        function node(n) {
+          var o = "",
+            cx = n.x + n.w / 2,
+            cls = "n t-" + (n.c || n.t) + (n.down ? " down" : "");
+          if (n.t === "zone") {
+            return (
+              '<rect class="zone' +
+              (n.bad ? " bad" : "") +
+              '" x="' +
+              n.x +
+              '" y="' +
+              n.y +
+              '" width="' +
+              n.w +
+              '" height="' +
+              n.h +
+              '" rx="12"/>' +
+              (n.l
+                ? '<text class="zl' +
+                  (n.bad ? " bad" : "") +
+                  '" x="' +
+                  (n.x + 12) +
+                  '" y="' +
+                  (n.y + 17) +
+                  '">' +
+                  esc(n.l) +
+                  "</text>"
+                : "")
+            );
+          }
+          if (n.t === "line") {
+            // plain vertical/horizontal rule, e.g. sequence-diagram lifeline
+            return (
+              '<line class="life" x1="' +
+              n.x +
+              '" y1="' +
+              n.y +
+              '" x2="' +
+              (n.x + n.w) +
+              '" y2="' +
+              (n.y + n.h) +
+              '"/>'
+            );
+          }
+          if (n.t === "ring") {
+            // hash ring: centre (cx,cy), radius r, optional tick count + position numbers
+            var s =
+              '<circle class="ringc" cx="' +
+              n.cx +
+              '" cy="' +
+              n.cy +
+              '" r="' +
+              n.r +
+              '"/>';
+            for (var i = 0; i < (n.ticks || 0); i++) {
+              var a = ((-90 + (i * 360) / n.ticks) * Math.PI) / 180,
+                c = Math.cos(a),
+                si = Math.sin(a);
+              s +=
+                '<line class="tick" x1="' +
+                (n.cx + (n.r - 5) * c) +
+                '" y1="' +
+                (n.cy + (n.r - 5) * si) +
+                '" x2="' +
+                (n.cx + (n.r + 5) * c) +
+                '" y2="' +
+                (n.cy + (n.r + 5) * si) +
+                '"/>';
+              if (n.nums)
+                s +=
+                  '<text class="ringn" x="' +
+                  (n.cx + (n.r - 30) * c) +
+                  '" y="' +
+                  (n.cy + (n.r - 30) * si + 4) +
+                  '" text-anchor="middle">' +
+                  i +
+                  "</text>";
+            }
+            if (n.l)
+              s +=
+                '<text class="nt" x="' +
+                n.cx +
+                '" y="' +
+                (n.cy + 4) +
+                '" text-anchor="middle">' +
+                esc(n.l) +
+                "</text>";
+            return s;
+          }
+          var ty = n.y + n.h / 2;
+          if (n.t === "db") {
+            var e = 8,
+              x = n.x,
+              y = n.y,
+              w = n.w,
+              h = n.h;
+            o +=
+              '<path class="' +
+              cls.replace("t-db", "t-" + (n.c || "db")) +
+              '" d="M' +
+              x +
+              "," +
+              (y + e) +
+              " A" +
+              w / 2 +
+              "," +
+              e +
+              " 0 0 1 " +
+              (x + w) +
+              "," +
+              (y + e) +
+              " V" +
+              (y + h - e) +
+              " A" +
+              w / 2 +
+              "," +
+              e +
+              " 0 0 1 " +
+              x +
+              "," +
+              (y + h - e) +
+              ' Z"/>';
+            o +=
+              '<ellipse class="' +
+              cls.replace("t-db", "t-" + (n.c || "db")) +
+              '" cx="' +
+              cx +
+              '" cy="' +
+              (y + e) +
+              '" rx="' +
+              w / 2 +
+              '" ry="' +
+              e +
+              '"/>';
+            ty += e / 2;
+          } else if (n.t === "circle") {
+            o +=
+              '<circle class="' +
+              cls.replace("t-circle", "t-" + (n.c || "app")) +
+              '" cx="' +
+              cx +
+              '" cy="' +
+              ty +
+              '" r="' +
+              n.w / 2 +
+              '"/>';
+          } else {
+            o +=
+              '<rect class="' +
+              cls +
+              '" x="' +
+              n.x +
+              '" y="' +
+              n.y +
+              '" width="' +
+              n.w +
+              '" height="' +
+              n.h +
+              '" rx="9"/>';
+          }
+          if (n.slots) {
+            var pad = 16,
+              cw = (n.w - pad * 2 - 4 * 6) / 5,
+              cy = n.y + n.h - 30;
+            for (var i = 0; i < 5; i++)
+              o +=
+                '<rect class="slot" x="' +
+                (n.x + pad + i * (cw + 6)) +
+                '" y="' +
+                cy +
+                '" width="' +
+                cw +
+                '" height="16" rx="3"/>';
+            o +=
+              '<text class="nl" x="' +
+              cx +
+              '" y="' +
+              (n.y + 24) +
+              '" text-anchor="middle">' +
+              esc(n.l) +
+              "</text>";
+            return o;
+          }
+          o += label(n, cx, ty);
+          if (n.down) {
+            o +=
+              '<text class="downx" x="' +
+              (n.w < 90 ? n.x + n.w / 2 : n.x + n.w - 4) +
+              '" y="' +
+              (n.w < 90 ? n.y - 4 : n.y + 14) +
+              '" text-anchor="' +
+              (n.w < 90 ? "middle" : "end") +
+              '">DOWN</text>';
+          }
+          return o;
+        }
+        function svg(key, d) {
+          var mid = "ah-" + key,
+            mbad = "ahb-" + key;
+          var o =
+            '<svg viewBox="0 0 640 ' +
+            d.h +
+            '" role="img" aria-label="' +
+            esc(d.alt || "Diagram") +
+            '">';
+          o +=
+            '<defs><marker id="' +
+            mid +
+            '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>' +
+            '<marker id="' +
+            mbad +
+            '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ahb" d="M0,0 L10,5 L0,10 z"/></marker></defs>';
+          d.n.forEach(function (n) {
+            if (n.t === "zone" || n.t === "line" || n.t === "ring")
+              o += node(n);
+          });
+          (d.e || []).forEach(function (e) {
+            var pts = e.p
+              .map(function (p) {
+                return p.join(",");
+              })
+              .join(" ");
+            var m = e.bad ? mbad : mid;
+            o +=
+              '<polyline class="ed' +
+              (e.dash ? " dash" : "") +
+              (e.bad ? " bad" : "") +
+              (e.good ? " good" : "") +
+              '" points="' +
+              pts +
+              '"' +
+              (e.noarrow ? "" : ' marker-end="url(#' + m + ')"') +
+              (e.both ? ' marker-start="url(#' + m + ')"' : "") +
+              "/>";
+            if (e.cut) {
+              // a ✕ on a broken link
+              var c = e.cut;
+              o +=
+                '<text class="cutx" x="' +
+                c[0] +
+                '" y="' +
+                (c[1] + 6) +
+                '" text-anchor="middle">✕</text>';
+            }
+          });
+          d.n.forEach(function (n) {
+            if (n.t !== "zone" && n.t !== "line" && n.t !== "ring")
+              o += node(n);
+          });
+          (d.e || []).forEach(function (e) {
+            if (e.l)
+              o +=
+                '<text class="el' +
+                (e.bad ? " bad" : "") +
+                '" x="' +
+                e.at[0] +
+                '" y="' +
+                e.at[1] +
+                '" text-anchor="' +
+                (e.a || "middle") +
+                '">' +
+                esc(e.l) +
+                "</text>";
+          });
+          (d.notes || []).forEach(function (t) {
+            o +=
+              '<text class="nt' +
+              (t.bad ? " bad" : "") +
+              (t.strong ? " strong" : "") +
+              '" x="' +
+              t.x +
+              '" y="' +
+              t.y +
+              '" text-anchor="' +
+              (t.a || "start") +
+              '">' +
+              esc(t.l) +
+              "</text>";
+          });
+          return o + "</svg>";
+        }
+        document.querySelectorAll(".dg[data-d]").forEach(function (el) {
+          var k = el.getAttribute("data-d");
+          if (D[k]) el.innerHTML = svg(k, D[k]);
+        });
+        var links = [].slice.call(document.querySelectorAll("#rail a"));
+        if (links.length && "IntersectionObserver" in window) {
+          var io = new IntersectionObserver(
+            function (ents) {
+              ents.forEach(function (en) {
+                if (en.isIntersecting) {
+                  links.forEach(function (a) {
+                    a.classList.toggle(
+                      "on",
+                      a.getAttribute("href") === "#" + en.target.id,
+                    );
+                  });
+                }
+              });
+            },
+            { rootMargin: "-30% 0px -60% 0px" },
+          );
+          document.querySelectorAll("main .step").forEach(function (sec) {
+            io.observe(sec);
+          });
+        }
+      })();
+    </script>
+  </body>
+</html>
