@@ -904,6 +904,10 @@
         line-height: 1.6;
       }
 
+      pre.code {
+        margin: 0 0 12px;
+      }
+
       .side {
         display: flex;
         flex-direction: column;
@@ -1138,14 +1142,23 @@
             would each force you to edit the same class, it's doing too much.
           </p>
           <h3>Breaks the rule</h3>
-          <div class="code">
-            class Marker { String name; String color; int year; int price; }
-            class Invoice { private Marker marker; private int quantity; //
-            reason 1: pricing (GST, discount…) public int calculateTotal() {
-            return marker.price * quantity; } // reason 2: print format public
-            void printInvoice() { /* print */ } // reason 3: storage public void
-            saveToDB() { /* save */ } }
-          </div>
+          <pre class="code">
+class Marker { String name; String color; int year; int price; }
+
+class Invoice {
+    private Marker marker;
+    private int quantity;
+
+    // reason 1: pricing (GST, discount…)
+    public int calculateTotal() { return marker.price * quantity; }
+
+    // reason 2: print format
+    public void printInvoice() { /* print */ }
+
+    // reason 3: storage
+    public void saveToDB() { /* save */ }
+}</pre
+          >
           <p>
             <span class="mono">Invoice</span> has
             <b>three reasons to change</b>: the price logic (add GST or a
@@ -1159,12 +1172,17 @@
             </figcaption>
           </figure>
           <h3>Follows the rule</h3>
-          <div class="code">
-            class Invoice { // marker, quantity public int calculateTotal() { …
-            } } class InvoicePrinter { // holds an Invoice public void print() {
-            … } } class InvoiceDao { // holds an Invoice public void saveToDB()
-            { … } }
-          </div>
+          <pre class="code">
+class Invoice {            // marker, quantity
+    public int calculateTotal() { … }
+}
+class InvoicePrinter {     // holds an Invoice
+    public void print() { … }
+}
+class InvoiceDao {         // holds an Invoice
+    public void saveToDB() { … }
+}</pre
+          >
           <p>
             A pricing change now only touches <span class="mono">Invoice</span>,
             and the other classes are unaffected. That's easier to maintain and
@@ -1180,11 +1198,14 @@
             add features. Add new code that <b>extends</b> it instead.
           </p>
           <h3>Breaks the rule</h3>
-          <div class="code">
-            class InvoiceDao { public void saveToDB() { … } // tested, live in
-            production // ✕ new method edited into a tested class: risk of bugs
-            public void saveToFile() { … } }
-          </div>
+          <pre class="code">
+class InvoiceDao {
+    public void saveToDB() { … }     // tested, live in production
+
+    // ✕ new method edited into a tested class: risk of bugs
+    public void saveToFile() { … }
+}</pre
+          >
           <figure>
             <div class="dg" data-d="ocp"></div>
             <figcaption>
@@ -1194,14 +1215,18 @@
             </figcaption>
           </figure>
           <h3>Follows the rule</h3>
-          <div class="code">
-            interface InvoiceDao { void save(Invoice invoice); } class
-            DatabaseInvoiceDao implements InvoiceDao { public void save(Invoice
-            i) { /* save to DB */ } } class FileInvoiceDao implements InvoiceDao
-            { public void save(Invoice i) { /* save to file */ } } // tomorrow:
-            class MongoInvoiceDao implements InvoiceDao { … } // ← extension, no
-            modification
-          </div>
+          <pre class="code">
+interface InvoiceDao { void save(Invoice invoice); }
+
+class DatabaseInvoiceDao implements InvoiceDao {
+    public void save(Invoice i) { /* save to DB */ }
+}
+class FileInvoiceDao implements InvoiceDao {
+    public void save(Invoice i) { /* save to file */ }
+}
+// tomorrow: class MongoInvoiceDao implements InvoiceDao { … }
+//           ← extension, no modification</pre
+          >
         </section>
 
         <section class="step" id="s3">
@@ -1230,15 +1255,22 @@
               a Bicycle.
             </figcaption>
           </figure>
-          <div class="code">
-            interface Bike { void turnOnEngine(); void accelerate(); } class
-            MotorCycle implements Bike { boolean isEngineOn; int speed; public
-            void turnOnEngine() { isEngineOn = true; } public void accelerate()
-            { speed = speed + 10; } } class Bicycle implements Bike { public
-            void turnOnEngine() { // ✕ narrows the parent throw new
-            AssertionError("there is no engine"); } public void accelerate() {
-            /* do something */ } }
-          </div>
+          <pre class="code">
+interface Bike { void turnOnEngine(); void accelerate(); }
+
+class MotorCycle implements Bike {
+    boolean isEngineOn; int speed;
+    public void turnOnEngine() { isEngineOn = true; }
+    public void accelerate()   { speed = speed + 10; }
+}
+
+class Bicycle implements Bike {
+    public void turnOnEngine() {      // ✕ narrows the parent
+        throw new AssertionError("there is no engine");
+    }
+    public void accelerate()   { /* do something */ }
+}</pre
+          >
           <p>
             Code that takes a <span class="mono">Bike</span> and calls
             <span class="mono">turnOnEngine()</span> works with
@@ -1264,22 +1296,36 @@
             </figcaption>
           </figure>
           <h3>Breaks the rule</h3>
-          <div class="code">
-            interface RestaurantEmployee { void washDishes(); void
-            serveCustomers(); void cookFood(); } class Waiter implements
-            RestaurantEmployee { public void washDishes() { /* not my job ✕ */ }
-            public void serveCustomers() { System.out.println("serving the
-            customer"); } public void cookFood() { /* not my job ✕ */ } }
-          </div>
+          <pre class="code">
+interface RestaurantEmployee {
+    void washDishes();
+    void serveCustomers();
+    void cookFood();
+}
+
+class Waiter implements RestaurantEmployee {
+    public void washDishes() { /* not my job ✕ */ }
+    public void serveCustomers() {
+        System.out.println("serving the customer");
+    }
+    public void cookFood() { /* not my job ✕ */ }
+}</pre
+          >
           <h3>Follows the rule</h3>
-          <div class="code">
-            interface WaiterInterface { void serveCustomers(); void takeOrder();
-            } interface ChefInterface { void cookFood(); void decideMenu(); } //
-            (and e.g. a HelperInterface { void washDishes(); }) class Waiter
-            implements WaiterInterface { public void serveCustomers() {
-            System.out.println("serving the customer"); } public void
-            takeOrder() { System.out.println("taking orders"); } }
-          </div>
+          <pre class="code">
+interface WaiterInterface { void serveCustomers(); void takeOrder(); }
+interface ChefInterface   { void cookFood();       void decideMenu(); }
+// (and e.g. a HelperInterface { void washDishes(); })
+
+class Waiter implements WaiterInterface {
+    public void serveCustomers() {
+        System.out.println("serving the customer");
+    }
+    public void takeOrder() {
+        System.out.println("taking orders");
+    }
+}</pre
+          >
         </section>
 
         <section class="step" id="s5">
@@ -1294,20 +1340,30 @@
             </figcaption>
           </figure>
           <h3>Breaks the rule</h3>
-          <div class="code">
-            class MacBook { private final WiredKeyboard keyboard; // ✕ concrete
-            classes private final WiredMouse mouse; public MacBook() { keyboard
-            = new WiredKeyboard(); // stuck with wired forever mouse = new
-            WiredMouse(); } }
-          </div>
+          <pre class="code">
+class MacBook {
+    private final WiredKeyboard keyboard;   // ✕ concrete classes
+    private final WiredMouse mouse;
+    public MacBook() {
+        keyboard = new WiredKeyboard();     // stuck with wired forever
+        mouse    = new WiredMouse();
+    }
+}</pre
+          >
           <h3>Follows the rule</h3>
-          <div class="code">
-            class MacBook { private final Keyboard keyboard; // interfaces
-            private final Mouse mouse; // constructor injection public
-            MacBook(Keyboard keyboard, Mouse mouse) { this.keyboard = keyboard;
-            this.mouse = mouse; } } // any combination works new MacBook(new
-            WiredKeyboard(), new BluetoothMouse());
-          </div>
+          <pre class="code">
+class MacBook {
+    private final Keyboard keyboard;        // interfaces
+    private final Mouse mouse;
+    // constructor injection
+    public MacBook(Keyboard keyboard, Mouse mouse) {
+        this.keyboard = keyboard;
+        this.mouse    = mouse;
+    }
+}
+// any combination works
+new MacBook(new WiredKeyboard(), new BluetoothMouse());</pre
+          >
           <p>
             Now <span class="mono">MacBook</span> works with wired, Bluetooth,
             or any mix, without changing its code.
